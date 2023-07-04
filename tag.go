@@ -1,8 +1,10 @@
 package mp3mp4tag
 
-import "image"
-import "bytes"
-import "os"
+import (
+	"bytes"
+	"image"
+	"os"
+)
 
 func OpenTag(filepath string) (*IDTag, error) {
 	tag, err := parse(filepath)
@@ -13,7 +15,7 @@ func OpenTag(filepath string) (*IDTag, error) {
 	}
 }
 func SaveTag(tag *IDTag) error {
-	err := save(tag)
+	err := tag.Save()
 	if err != nil {
 		return err
 	} else {
@@ -31,7 +33,7 @@ func (tag *IDTag) ClearAllTags() {
 	tag.genre = ""
 	tag.title = ""
 	tag.year = 0
-	tag.bpm = 0
+	tag.bpm = ""
 
 	tag.id3.contentType = ""
 	tag.id3.copyrightMsg = ""
@@ -93,10 +95,10 @@ func (tag *IDTag) Year() int {
 func (tag *IDTag) SetYear(year int) {
 	tag.year = year
 }
-func (tag *IDTag) BPM() int {
+func (tag *IDTag) BPM() string {
 	return tag.bpm
 }
-func (tag *IDTag) SetBPM(bpm int) {
+func (tag *IDTag) SetBPM(bpm string) {
 	tag.bpm = bpm
 }
 func (tag *IDTag) ContentType() string {
@@ -159,31 +161,31 @@ func (tag *IDTag) Publisher() string {
 func (tag *IDTag) SetPublisher(publisher string) {
 	tag.id3.publisher = publisher
 }
-func (tag *IDTag) AlbumArt() *image.Image{
+func (tag *IDTag) AlbumArt() *image.Image {
 	return tag.albumArt
 }
-func (tag *IDTag) SetAlbumArtFromByteArray(albumArt []byte)error{
+func (tag *IDTag) SetAlbumArtFromByteArray(albumArt []byte) error {
 	img, _, err := image.Decode(bytes.NewReader(albumArt))
 	if err != nil {
 		return err
-	} else{
+	} else {
 		*tag.albumArt = img
 		return nil
 	}
 }
-func (tag *IDTag) SetAlbumArtFromImage(albumArt *image.Image){
+func (tag *IDTag) SetAlbumArtFromImage(albumArt *image.Image) {
 	*tag.albumArt = *albumArt
 }
-func (tag *IDTag) SetAlbumArtFromFilePath(filePath string)error{
+func (tag *IDTag) SetAlbumArtFromFilePath(filePath string) error {
 	f, err := os.Open(filePath)
-    if err != nil {
-        return err
-    }
-    defer f.Close()
-    img, _, err := image.Decode(f)
 	if err != nil {
-        return err
-    }
+		return err
+	}
+	defer f.Close()
+	img, _, err := image.Decode(f)
+	if err != nil {
+		return err
+	}
 	*tag.albumArt = img
 	return nil
 }
