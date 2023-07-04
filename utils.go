@@ -1,11 +1,11 @@
 package mp3mp4tag
 
 import (
-	"strings"
-	"errors"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"io"
+	"strings"
 )
 
 func getFileType(filepath string) (*string, error) {
@@ -13,10 +13,10 @@ func getFileType(filepath string) (*string, error) {
 	lastIndex := len(fileTypeArr) - 1
 	fileType := fileTypeArr[lastIndex]
 	fileType = strings.ToLower(fileType)
-	if(fileType == "mp3" || fileType == "m4p" || fileType == "m4a" || fileType == "m4b"){
+	if fileType == "mp3" || fileType == "m4p" || fileType == "m4a" || fileType == "m4b" {
 		return &fileType, nil
-	}else{
-		return nil, errors.New("Format: Unsupported Format: "+ fileType)
+	} else {
+		return nil, errors.New("Format: Unsupported Format: " + fileType)
 	}
 }
 func getBit(b byte, n uint) bool {

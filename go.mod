@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/Sorrow446/go-mp4tag v0.0.0-20220705231847-a6f24ef004f0
 	github.com/bogem/id3v2 v1.2.0
-	github.com/dhowden/tag v0.0.0
 )
 
 require (

@@ -122,49 +122,49 @@ func (tag *IDTag) Save() error {
 	} else {
 		var mp4tag mp4tagWriter.Tags
 		var delete []string
-		if(tag.artist != ""){
+		if tag.artist != "" {
 			mp4tag.Artist = tag.artist
-		}else{
+		} else {
 			delete = append(delete, "artist")
 		}
-		if(tag.album != ""){
+		if tag.album != "" {
 			mp4tag.Album = tag.album
-		}else{
+		} else {
 			delete = append(delete, "album")
 		}
-		if(tag.albumArtist != ""){
+		if tag.albumArtist != "" {
 			mp4tag.AlbumArtist = tag.albumArtist
-		}else{
+		} else {
 			delete = append(delete, "albumArtist")
 		}
-		if(tag.comments != ""){
+		if tag.comments != "" {
 			mp4tag.Comment = tag.comments
-		}else{
+		} else {
 			delete = append(delete, "comment")
 		}
-		if(tag.composer != ""){
+		if tag.composer != "" {
 			mp4tag.Composer = tag.composer
-		}else{
+		} else {
 			delete = append(delete, "composer")
 		}
-		if(tag.id3.copyrightMsg!= ""){
+		if tag.id3.copyrightMsg != "" {
 			mp4tag.Copyright = tag.id3.copyrightMsg
-		}else{
+		} else {
 			delete = append(delete, "copyright")
 		}
-		if(tag.genre != ""){
+		if tag.genre != "" {
 			mp4tag.Genre = tag.genre
-		}else{
+		} else {
 			delete = append(delete, "genre")
 		}
-		if(tag.title != ""){
+		if tag.title != "" {
 			mp4tag.Title = tag.title
-		}else{
+		} else {
 			delete = append(delete, "title")
 		}
-		if(tag.year != 0){
+		if tag.year != 0 {
 			mp4tag.Year = strconv.Itoa(tag.year)
-		}else{
+		} else {
 			delete = append(delete, "year")
 		}
 
@@ -173,12 +173,12 @@ func (tag *IDTag) Save() error {
 			jpeg.Encode(buf, *tag.albumArt, nil)
 			bytes := buf.Bytes()
 			mp4tag.Cover = bytes
-		}else{
+		} else {
 			delete = append(delete, "cover")
 		}
 
 		mp4tag.Delete = delete
-		
+
 		err := mp4tagWriter.Write(tag.fileUrl, &mp4tag)
 		if err != nil {
 			return err
