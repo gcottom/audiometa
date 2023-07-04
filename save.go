@@ -1,0 +1,135 @@
+package mp3mp4tag
+import (
+	"bytes"
+	"image/jpeg"
+	"log"
+	"strconv"
+
+	mp4tagWriter "github.com/Sorrow446/go-mp4tag"
+	mp3TagLib "github.com/bogem/id3v2"
+)
+func save(tag *IDTag) error {
+	fileType, err := getFileType(tag.fileUrl)
+	if(err != nil){
+		return err
+	}
+	if *fileType == "mp3" {
+		mp3Tag, err := mp3TagLib.Open(tag.fileUrl, mp3TagLib.Options{Parse: true})
+		if err != nil {
+			log.Fatal("Error while opening mp3 file for writing: ", err)
+		}
+		mp3Tag.SetArtist(tag.artist)
+		mp3Tag.SetAlbum(tag.album)
+		mp3Tag.SetGenre(tag.genre)
+		mp3Tag.SetTitle(tag.title)
+		if tag.year != 0 {
+			mp3Tag.SetYear(strconv.Itoa(tag.year))
+		}
+		if tag.bpm != 0 {
+			textFrame := mp3TagLib.TextFrame{
+				Encoding: mp3TagLib.EncodingUTF8,
+				Text:     strconv.Itoa(tag.bpm),
+			}
+			mp3Tag.AddFrame("BPM", textFrame)
+		}
+		textFrame := mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.comments,
+		}
+		mp3Tag.AddFrame("COMM", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.composer,
+		}
+		mp3Tag.AddFrame("TCOM", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.contentType,
+		}
+		mp3Tag.AddFrame("TCON", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.copyrightMsg,
+		}
+		mp3Tag.AddFrame("TCOP", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.date,
+		}
+		mp3Tag.AddFrame("TDRC", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.encodedBy,
+		}
+		mp3Tag.AddFrame("TENC", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.lyricist,
+		}
+		mp3Tag.AddFrame("TEXT", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.fileType,
+		}
+		mp3Tag.AddFrame("TFLT", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.language,
+		}
+		mp3Tag.AddFrame("TLAN", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.length,
+		}
+		mp3Tag.AddFrame("TLEN", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.partOfSet,
+		}
+		mp3Tag.AddFrame("TPOS", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.id3.publisher,
+		}
+		mp3Tag.AddFrame("TPUB", textFrame)
+		if tag.albumArt != nil {
+			buf := new(bytes.Buffer)
+			jpeg.Encode(buf, *tag.albumArt, nil)
+			bytes := buf.Bytes()
+			pic := mp3TagLib.PictureFrame{
+				Encoding:    mp3TagLib.EncodingUTF8,
+				MimeType:    "image/jpeg",
+				PictureType: mp3TagLib.PTFrontCover,
+				Description: "Front cover",
+				Picture:     bytes,
+			}
+			mp3Tag.AddAttachedPicture(pic)
+		}
+		err = mp3Tag.Save()
+		if err != nil {
+			return err
+		}
+	} else {
+		var mp4tag mp4tagWriter.Tags
+		mp4tag.Artist = tag.artist
+		mp4tag.Album = tag.album
+		mp4tag.AlbumArtist = tag.albumArtist
+		mp4tag.Comment = tag.comments
+		mp4tag.Composer = tag.composer
+		mp4tag.Copyright = tag.id3.copyrightMsg
+		mp4tag.Genre = tag.genre
+		mp4tag.Title = tag.title
+		mp4tag.Year = strconv.Itoa(tag.year)
+		if tag.albumArt != nil {
+			buf := new(bytes.Buffer)
+			jpeg.Encode(buf, *tag.albumArt, nil)
+			bytes := buf.Bytes()
+			mp4tag.Cover = bytes
+		}
+		err := mp4tagWriter.Write(tag.fileUrl, &mp4tag)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

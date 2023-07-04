@@ -6,62 +6,34 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 
-	"github.com/bogem/id3v2"
 	mp3TagLib "github.com/bogem/id3v2"
 	mp4TagReader "github.com/dhowden/tag"
 )
 
-type IDTag struct {
-	Artist      string
-	AlbumArtist string
-	Album       string
-	AlbumArt    image.Image
-	Comments    string
-	Composer    string
-	Genre       string
-	Title       string
-	Year        int
-	BPM         int
-	ID3         ID3Frames
-}
-type ID3Frames struct {
-	ContentType   string //Content Type
-	CopyrightMsg  string //Copyright Message
-	Date          string //Date
-	PlaylistDelay string //Playlist Delay
-	EncodedBy     string //Endcoded By
-	Lyricist      string //Lyricist
-	FileType      string //File Type
-	Language      string //Language
-	Length        string //Length
-	PartOfSet     string //Part of a set
-	Publisher     string //Publisher
-	TrackNumber   string //Track number ex "2/5"
-}
-
-func parse(filepath string) IDTag {
-	fileTypeArr := strings.Split(filepath, ".")
-	lastIndex := len(fileTypeArr) - 1
-	fileType := fileTypeArr[lastIndex]
+func parse(filepath string) (*IDTag, error) {
+	fileType, err := getFileType(filepath)
+	if(err != nil){
+		return nil, err
+	}
 	var resultTag IDTag
-	if fileType == "mp3" {
+	if *fileType == "mp3" {
 		//use the mp3TagLib
 		tag, err := mp3TagLib.Open(filepath, mp3TagLib.Options{Parse: true})
-		defer tag.Close()
 		if err != nil {
 			log.Fatal("Error while opening mp3 file: ", err)
+			return nil, err
 		}
-		resultTag = IDTag{Artist: tag.Artist(), AlbumArtist: tag.Artist(), Album: tag.Album(), Genre: tag.Genre(), Title: tag.Title()}
-		resultTag.Year, _ = strconv.Atoi(tag.Year())
+		defer tag.Close()
+		resultTag = IDTag{artist: tag.Artist(), album: tag.Album(), genre: tag.Genre(), title: tag.Title()}
+		resultTag.year, _ = strconv.Atoi(tag.Year())
 		bpmFramer := tag.GetLastFrame(tag.CommonID("BPM"))
 		if bpmFramer != nil {
 			bpm, ok := bpmFramer.(mp3TagLib.TextFrame)
 			if !ok {
 				log.Fatal("Couldn't assert bpm frame")
 			} else {
-				resultTag.BPM, _ = strconv.Atoi(bpm.Text)
+				resultTag.bpm, _ = strconv.Atoi(bpm.Text)
 			}
 		}
 		commentFramer := tag.GetLastFrame("COMM")
@@ -70,7 +42,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert comment frame")
 			} else {
-				resultTag.Comments = comment.Text
+				resultTag.comments = comment.Text
 			}
 		}
 		composerFramer := tag.GetLastFrame("TCOM")
@@ -79,7 +51,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert composer frame")
 			} else {
-				resultTag.Composer = composer.Text
+				resultTag.composer = composer.Text
 			}
 		}
 		exFramer := tag.GetLastFrame("TCON")
@@ -88,7 +60,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert content type frame")
 			} else {
-				resultTag.ID3.ContentType = ex.Text
+				resultTag.id3.contentType = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TCOP")
@@ -97,7 +69,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert copyright frame")
 			} else {
-				resultTag.ID3.CopyrightMsg = ex.Text
+				resultTag.id3.copyrightMsg = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TDRC")
@@ -106,16 +78,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert date frame")
 			} else {
-				resultTag.ID3.Date = ex.Text
-			}
-		}
-		exFramer = tag.GetLastFrame("TDLY")
-		if exFramer != nil {
-			ex, ok := exFramer.(mp3TagLib.TextFrame)
-			if !ok {
-				log.Fatal("Couldn't assert playlist delay frame")
-			} else {
-				resultTag.ID3.PlaylistDelay = ex.Text
+				resultTag.id3.date = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TENC")
@@ -124,7 +87,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert encoded by frame")
 			} else {
-				resultTag.ID3.EncodedBy = ex.Text
+				resultTag.id3.encodedBy = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TEXT")
@@ -133,7 +96,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert lyricist frame")
 			} else {
-				resultTag.ID3.Lyricist = ex.Text
+				resultTag.id3.lyricist = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TFLT")
@@ -142,7 +105,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert file type frame")
 			} else {
-				resultTag.ID3.FileType = ex.Text
+				resultTag.id3.fileType = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TLAN")
@@ -151,7 +114,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert language frame")
 			} else {
-				resultTag.ID3.Language = ex.Text
+				resultTag.id3.language = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TLEN")
@@ -160,7 +123,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert length frame")
 			} else {
-				resultTag.ID3.Length = ex.Text
+				resultTag.id3.length = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TPOS")
@@ -169,7 +132,7 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert part of set frame")
 			} else {
-				resultTag.ID3.PartOfSet = ex.Text
+				resultTag.id3.partOfSet = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TPUB")
@@ -178,47 +141,43 @@ func parse(filepath string) IDTag {
 			if !ok {
 				log.Fatal("Couldn't assert publisher frame")
 			} else {
-				resultTag.ID3.Publisher = ex.Text
-			}
-		}
-		exFramer = tag.GetLastFrame("TRCK")
-		if exFramer != nil {
-			ex, ok := exFramer.(mp3TagLib.TextFrame)
-			if !ok {
-				log.Fatal("Couldn't assert track pos frame")
-			} else {
-				resultTag.ID3.TrackNumber = ex.Text
+				resultTag.id3.publisher = ex.Text
 			}
 		}
 		pictures := tag.GetFrames(tag.CommonID("Attached picture"))
 		if len(pictures) > 0 {
-			pic := pictures[0].(id3v2.PictureFrame)
+			pic := pictures[0].(mp3TagLib.PictureFrame)
 			img, _, err := image.Decode(bytes.NewReader(pic.Picture))
 			if err != nil {
 				log.Fatalln(err)
 			}
-			resultTag.AlbumArt = img
+			*resultTag.albumArt = img
+		} else {
+			*resultTag.albumArt = nil
 		}
 
 	} else {
 		f, err := os.Open(filepath)
 		if err != nil {
 			log.Fatal("Error while opening file: ", err)
+			return nil, err
 		}
 		defer f.Close()
 		tag, err := mp4TagReader.ReadFrom(f)
 		if err != nil {
 			log.Fatal("Error while reading file: ", err)
+			return nil, err
 		}
-		resultTag = IDTag{Artist: tag.Artist(), AlbumArtist: tag.AlbumArtist(), Album: tag.Album(), Comments: tag.Comment(), Composer: tag.Composer(), Genre: tag.Genre(), Title: tag.Title(), Year: tag.Year(), BPM: tag.Tempo()}
+		resultTag = IDTag{artist: tag.Artist(), albumArtist: tag.AlbumArtist(), album: tag.Album(), comments: tag.Comment(), composer: tag.Composer(), genre: tag.Genre(), title: tag.Title(), year: tag.Year(), bpm: tag.Tempo()}
 		if tag.Picture() != nil {
 			albumArt := tag.Picture().Data
 			img, _, err := image.Decode(bytes.NewReader(albumArt))
 			if err != nil {
 				log.Fatal("Error opening album image")
 			}
-			resultTag.AlbumArt = img
+			*resultTag.albumArt = img
 		}
 	}
-	return resultTag
+	resultTag.fileUrl = filepath
+	return &resultTag, nil
 }
