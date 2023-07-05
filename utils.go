@@ -12,7 +12,7 @@ func getFileType(filepath string) (*string, error) {
 	lastIndex := len(fileTypeArr) - 1
 	fileType := fileTypeArr[lastIndex]
 	fileType = strings.ToLower(fileType)
-	if fileType == "mp3" || fileType == "m4p" || fileType == "m4a" || fileType == "m4b" {
+	if fileType == "mp3" || fileType == "m4p" || fileType == "m4a" || fileType == "m4b" || fileType == "mp4" {
 		return &fileType, nil
 	} else {
 		return nil, errors.New("Format: Unsupported Format: " + fileType)
