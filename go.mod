@@ -1,4 +1,4 @@
-module gagecottom.com/mp3-mp4-tag
+module github.com/gcottom/mp3-mp4-tag
 
 go 1.20
 
