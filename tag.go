@@ -169,12 +169,12 @@ func (tag *IDTag) SetAlbumArtFromByteArray(albumArt []byte) error {
 	if err != nil {
 		return err
 	} else {
-		*tag.albumArt = img
+		tag.albumArt = &img
 		return nil
 	}
 }
 func (tag *IDTag) SetAlbumArtFromImage(albumArt *image.Image) {
-	*tag.albumArt = *albumArt
+	tag.albumArt = albumArt
 }
 func (tag *IDTag) SetAlbumArtFromFilePath(filePath string) error {
 	f, err := os.Open(filePath)
@@ -186,6 +186,6 @@ func (tag *IDTag) SetAlbumArtFromFilePath(filePath string) error {
 	if err != nil {
 		return err
 	}
-	*tag.albumArt = img
+	tag.albumArt = &img
 	return nil
 }
