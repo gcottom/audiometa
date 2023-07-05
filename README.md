@@ -7,7 +7,7 @@ ID3 and MP4 tag reader and writer for go
 [![Go Reference](https://pkg.go.dev/badge/github.com/gcottom/mp3-mp4-tag.svg)](https://pkg.go.dev/github.com/gcottom/mp3-mp4-tag)
 
 
-This library allows you to parse and write ID tags for mp3 and mp4 (m4a, m4b, m4p) files.
+This module allows you to parse and write ID tags for mp3 and mp4 (m4a, m4b, m4p) files.
 
 Simply use the OpenTag() function with a string file path as the argument and the library will return the IDTag.
 
