@@ -18,7 +18,7 @@ Fields that can be parsed:
 
 MP3: Artist, AlbumArtist, Album, AlbumArt, Comments, Composer, Genre, Title, Year, BPM, ContentType, CopyrightMessage, Date, EncodedBy, Lyricist, FileType, Language, Length, PartOfSet, and Publisher
 
-MP4: Artist, AlbumARtist, Album, AlbumArt, Comments, Composer, Genre, Title, Year, EncodedBy, and CopyrightMessage
+MP4: Artist, AlbumArtist, Album, AlbumArt, Comments, Composer, Genre, Title, Year, EncodedBy, and CopyrightMessage
 
 Fields that can be written: 
 
