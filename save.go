@@ -21,7 +21,7 @@ func (tag *IDTag) Save() error {
 		}
 		mp3Tag.SetArtist(tag.artist)
 		mp3Tag.SetAlbum(tag.album)
-		mp3Tag.SetGenre(tag.genre)
+
 		mp3Tag.SetTitle(tag.title)
 
 		//if tag.bpm != "" {
@@ -38,6 +38,11 @@ func (tag *IDTag) Save() error {
 		mp3Tag.AddFrame("COMM", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
+			Text:     tag.genre,
+		}
+		mp3Tag.AddFrame("TCON", textFrame)
+		textFrame = mp3TagLib.TextFrame{
+			Encoding: mp3TagLib.EncodingUTF8,
 			Text:     tag.year,
 		}
 		mp3Tag.AddFrame("TYER", textFrame)
@@ -51,11 +56,6 @@ func (tag *IDTag) Save() error {
 			Text:     tag.composer,
 		}
 		mp3Tag.AddFrame("TCOM", textFrame)
-		textFrame = mp3TagLib.TextFrame{
-			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.contentType,
-		}
-		mp3Tag.AddFrame("TCON", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
 			Text:     tag.id3.copyrightMsg,
