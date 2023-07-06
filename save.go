@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"image/jpeg"
 	"log"
-	"strconv"
 
 	mp4tagWriter "github.com/Sorrow446/go-mp4tag"
 	mp3TagLib "github.com/bogem/id3v2"
@@ -24,8 +23,8 @@ func (tag *IDTag) Save() error {
 		mp3Tag.SetAlbum(tag.album)
 		mp3Tag.SetGenre(tag.genre)
 		mp3Tag.SetTitle(tag.title)
-		if tag.year != 0 {
-			mp3Tag.SetYear(strconv.Itoa(tag.year))
+		if tag.year != "" {
+			mp3Tag.SetYear(tag.year)
 		}
 		//if tag.bpm != "" {
 		textFrame := mp3TagLib.TextFrame{
@@ -162,8 +161,8 @@ func (tag *IDTag) Save() error {
 		} else {
 			delete = append(delete, "title")
 		}
-		if tag.year != 0 {
-			mp4tag.Year = strconv.Itoa(tag.year)
+		if tag.year != "" {
+			mp4tag.Year = tag.year
 		} else {
 			delete = append(delete, "year")
 		}

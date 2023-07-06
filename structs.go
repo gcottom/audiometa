@@ -13,7 +13,7 @@ type IDTag struct {
 	composer    string
 	genre       string
 	title       string
-	year        int
+	year        string
 	bpm         string
 	id3         ID3Frames
 	fileUrl     string

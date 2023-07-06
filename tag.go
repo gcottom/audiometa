@@ -32,7 +32,7 @@ func (tag *IDTag) ClearAllTags() {
 	tag.composer = ""
 	tag.genre = ""
 	tag.title = ""
-	tag.year = 0
+	tag.year = ""
 	tag.bpm = ""
 
 	tag.id3.contentType = ""
@@ -89,10 +89,10 @@ func (tag *IDTag) Title() string {
 func (tag *IDTag) SetTitle(title string) {
 	tag.title = title
 }
-func (tag *IDTag) Year() int {
+func (tag *IDTag) Year() string {
 	return tag.year
 }
-func (tag *IDTag) SetYear(year int) {
+func (tag *IDTag) SetYear(year string) {
 	tag.year = year
 }
 func (tag *IDTag) BPM() string {

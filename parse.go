@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-
 	mp3TagLib "github.com/bogem/id3v2"
 )
 
@@ -25,7 +24,7 @@ func parse(filepath string) (*IDTag, error) {
 		}
 		defer tag.Close()
 		resultTag = IDTag{artist: tag.Artist(), album: tag.Album(), genre: tag.Genre(), title: tag.Title()}
-		resultTag.year, _ = strconv.Atoi(tag.Year())
+		resultTag.year = tag.Year()
 		bpmFramer := tag.GetLastFrame(tag.CommonID("BPM"))
 		if bpmFramer != nil {
 			bpm, ok := bpmFramer.(mp3TagLib.TextFrame)
@@ -176,7 +175,7 @@ func parse(filepath string) (*IDTag, error) {
 			log.Fatal("Error while reading file: ", err)
 			return nil, err
 		}
-		resultTag = IDTag{artist: tag.Artist(), albumArtist: tag.AlbumArtist(), album: tag.Album(), comments: tag.Comment(), composer: tag.Composer(), genre: tag.Genre(), title: tag.Title(), year: tag.Year()}
+		resultTag = IDTag{artist: tag.Artist(), albumArtist: tag.AlbumArtist(), album: tag.Album(), comments: tag.Comment(), composer: tag.Composer(), genre: tag.Genre(), title: tag.Title(), year: strconv.Itoa(tag.Year())}
 		resultTag.id3.encodedBy = tag.Encoder()
 		resultTag.id3.copyrightMsg = tag.Copyright()
 		if tag.Picture() != nil {
