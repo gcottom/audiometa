@@ -9,8 +9,8 @@ import (
 	mp3TagLib "github.com/bogem/id3v2"
 )
 
+// This operation saves the corresponding IDTag to the mp3/mp4 file that it references and returns an error if the saving process fails
 func (tag *IDTag) Save() error {
-	//This operation saves the corresponding IDTag to the mp3/mp4 file that it references and returns an error if the saving process fails
 	fileType, err := getFileType(tag.fileUrl)
 	if err != nil {
 		return err
