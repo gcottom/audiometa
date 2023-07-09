@@ -6,10 +6,12 @@ import (
 	"log"
 	"os"
 	"strconv"
+
 	mp3TagLib "github.com/bogem/id3v2"
 )
 
 func parse(filepath string) (*IDTag, error) {
+	//This operation opens the ID tag for the corresponding file that is passed in the filepath parameter regardless of the filetype as long as it is a supported file type
 	fileType, err := getFileType(filepath)
 	if err != nil {
 		return nil, err

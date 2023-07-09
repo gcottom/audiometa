@@ -7,6 +7,8 @@ import (
 )
 
 func OpenTag(filepath string) (*IDTag, error) {
+	//Opens the ID tag for the corresponding file as long as it is a supported filetype
+	//Use the OpenTag command and you will be able to access all metadata associated with the file
 	tag, err := parse(filepath)
 	if err != nil {
 		return nil, err
@@ -15,6 +17,7 @@ func OpenTag(filepath string) (*IDTag, error) {
 	}
 }
 func SaveTag(tag *IDTag) error {
+	//This operation saves the corresponding IDTag to the mp3/mp4 file that it references and returns an error if the saving process fails
 	err := tag.Save()
 	if err != nil {
 		return err
