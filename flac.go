@@ -24,6 +24,16 @@ func extractFLACComment(fileName string) (*flacvorbis.MetaDataBlockVorbisComment
 	}
 	return cmt, cmtIdx
 }
-func remove(slice []*flac.MetaDataBlock, s int)[]*flac.MetaDataBlock {
-    return append(slice[:s], slice[s+1:]...)
+func getFLACPictureIndex(metaIn []*flac.MetaDataBlock) int {
+	var cmtIdx = 0
+	for idx, meta := range metaIn {
+		if meta.Type == flac.Picture {
+			cmtIdx = idx
+			break
+		}
+	}
+	return cmtIdx
+}
+func removeFLACMetaBlock(slice []*flac.MetaDataBlock, s int) []*flac.MetaDataBlock {
+	return append(slice[:s], slice[s+1:]...)
 }

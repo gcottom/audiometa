@@ -226,11 +226,15 @@ func (tag *IDTag) Save() error {
 
 		cmtsmeta := cmts.Marshal()
 		if idx > 0 {
-			f.Meta = remove(f.Meta, idx)
+			f.Meta = removeFLACMetaBlock(f.Meta, idx)
 			f.Meta = append(f.Meta, &cmtsmeta)
 		} else {
 			f.Meta = append(f.Meta, &cmtsmeta)
 			log.Printf("length %d", len(f.Meta))
+		}
+		idx = getFLACPictureIndex(f.Meta)
+		if idx > 0 {
+			f.Meta = removeFLACMetaBlock(f.Meta, idx)
 		}
 		if tag.albumArt != nil {
 			buf := new(bytes.Buffer)

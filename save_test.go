@@ -62,6 +62,22 @@ func TestUpdateTagsMP3(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
+	tag.ClearAllTags()
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
 	tag.SetArtist("TestArtist2")
 	err = SaveTag(tag)
 	if err != nil {
@@ -132,6 +148,22 @@ func TestUpdateTagsM4A(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
+	tag.ClearAllTags()
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
 	tag.SetArtist("TestArtist2")
 	err = SaveTag(tag)
 	if err != nil {
@@ -191,7 +223,6 @@ func TestWriteTagsFlacFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	t.Logf("artist: %s, album: %s, title: %s", tag.Artist(), tag.Album(), tag.Title())
 	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
@@ -202,6 +233,22 @@ func TestUpdateTagsFlac(t *testing.T) {
 	tag, err := parse(path)
 	if err != nil {
 		t.Fatal("Error parsing!")
+	}
+	tag.ClearAllTags()
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
 	}
 	tag.SetArtist("TestArtist2")
 	err = SaveTag(tag)

@@ -164,7 +164,6 @@ func parse(filepath string) (*IDTag, error) {
 		resultTag = IDTag{}
 		if cmts != nil {
 			for _, cmt := range cmts.Comments {
-				log.Println(cmt)
 				if strings.HasPrefix(cmt, "album=") {
 					tag := strings.Replace(cmt, "album=", "", 1)
 					resultTag.album = tag
@@ -198,7 +197,6 @@ func parse(filepath string) (*IDTag, error) {
 				}
 			}
 		}
-		log.Println("DONE PARSING FILE")
 		file, err := os.Open(filepath)
 		if err != nil {
 			log.Println("Error while opening file: ", err)
