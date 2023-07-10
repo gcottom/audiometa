@@ -40,7 +40,6 @@ func (tag *IDTag) ClearAllTags() {
 	tag.year = ""
 	tag.bpm = ""
 
-	tag.id3.contentType = ""
 	tag.id3.copyrightMsg = ""
 	tag.id3.date = ""
 	tag.id3.encodedBy = ""

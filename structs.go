@@ -3,7 +3,10 @@ package mp3mp4tag
 import (
 	"image"
 )
-
+//The IDTag represents all of the metadata that can be retrieved from a file.
+//The IDTag contains all tags for both mp3 and mp4. Some tags may not be applicable to all types.
+//Only the valid types are written to the respective data files. 
+//Although a tag may be set, if the function to write that tag attribute doesn't exist, the tag attribute will be ignored and the save function will not produce an error. 
 type IDTag struct {
 	artist      string
 	albumArtist string
@@ -19,7 +22,6 @@ type IDTag struct {
 	fileUrl     string
 }
 type ID3Frames struct {
-	contentType  string //Content Type
 	copyrightMsg string //Copyright Message
 	date         string //Date
 	encodedBy    string //Endcoded By

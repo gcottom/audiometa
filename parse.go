@@ -54,16 +54,7 @@ func parse(filepath string) (*IDTag, error) {
 				resultTag.composer = composer.Text
 			}
 		}
-		exFramer := tag.GetLastFrame("TCON")
-		if exFramer != nil {
-			ex, ok := exFramer.(mp3TagLib.TextFrame)
-			if !ok {
-				log.Fatal("Couldn't assert content type frame")
-			} else {
-				resultTag.id3.contentType = ex.Text
-			}
-		}
-		exFramer = tag.GetLastFrame("TPE2")
+		exFramer := tag.GetLastFrame("TPE2")
 		if exFramer != nil {
 			ex, ok := exFramer.(mp3TagLib.TextFrame)
 			if !ok {
