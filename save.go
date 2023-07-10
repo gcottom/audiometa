@@ -7,6 +7,9 @@ import (
 
 	mp4tagWriter "github.com/Sorrow446/go-mp4tag"
 	mp3TagLib "github.com/bogem/id3v2"
+	"github.com/go-flac/flacpicture"
+	"github.com/go-flac/flacvorbis"
+	"github.com/go-flac/go-flac"
 )
 
 // This operation saves the corresponding IDTag to the mp3/mp4 file that it references and returns an error if the saving process fails
@@ -122,7 +125,7 @@ func (tag *IDTag) Save() error {
 			return err
 		}
 		mp3Tag.Close()
-	} else {
+	} else if *fileType == "m4a" || *fileType == "m4b" || *fileType == "m4p" || *fileType == "mp4" {
 		var mp4tag mp4tagWriter.Tags
 		var delete []string
 		if tag.artist != "" {
@@ -186,6 +189,68 @@ func (tag *IDTag) Save() error {
 		if err != nil {
 			return err
 		}
+	} else if *fileType == "flac" {
+		// Decode the FLAC file.
+		f, err := flac.ParseFile(tag.fileUrl)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		cmts, idx := extractFLACComment(tag.fileUrl)
+		if cmts == nil {
+			cmts = flacvorbis.New()
+		}
+		err = cmts.Add(flacvorbis.FIELD_TITLE, tag.title)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		err = cmts.Add(flacvorbis.FIELD_ALBUM, tag.album)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		err = cmts.Add(flacvorbis.FIELD_ARTIST, tag.artist)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		err = cmts.Add(flacvorbis.FIELD_GENRE, tag.genre)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		cmtsmeta := cmts.Marshal()
+		if idx > 0 {
+			f.Meta = remove(f.Meta, idx)
+			f.Meta = append(f.Meta, &cmtsmeta)
+		} else {
+			f.Meta = append(f.Meta, &cmtsmeta)
+			log.Printf("length %d", len(f.Meta))
+		}
+		if tag.albumArt != nil {
+			buf := new(bytes.Buffer)
+			jpeg.Encode(buf, *tag.albumArt, nil)
+			bytes := buf.Bytes()
+			picture, err := flacpicture.NewFromImageData(flacpicture.PictureTypeFrontCover, "Front cover", bytes, "image/jpeg")
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+			picturemeta := picture.Marshal()
+			f.Meta = append(f.Meta, &picturemeta)
+		}
+
+		err = f.Save(tag.fileUrl)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
 	}
 	return nil
 }

@@ -6,8 +6,11 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	mp3TagLib "github.com/bogem/id3v2"
+	"github.com/go-flac/flacpicture"
+	flac "github.com/go-flac/go-flac"
 )
 
 // This operation opens the ID tag for the corresponding file that is passed in the filepath parameter regardless of the filetype as long as it is a supported file type
@@ -156,6 +159,73 @@ func parse(filepath string) (*IDTag, error) {
 			resultTag.albumArt = nil
 		}
 
+	} else if *fileType == "flac" {
+		cmts, _ := extractFLACComment(filepath)
+		resultTag = IDTag{}
+		if cmts != nil {
+			for _, cmt := range cmts.Comments {
+				log.Println(cmt)
+				if strings.HasPrefix(cmt, "album=") {
+					tag := strings.Replace(cmt, "album=", "", 1)
+					resultTag.album = tag
+				} else if strings.HasPrefix(cmt, "ALBUM=") {
+					tag := strings.Replace(cmt, "ALBUM=", "", 1)
+					resultTag.album = tag
+				} else if strings.HasPrefix(cmt, "artist=") {
+					tag := strings.Replace(cmt, "artist=", "", 1)
+					resultTag.artist = tag
+				} else if strings.HasPrefix(cmt, "ARTIST=") {
+					tag := strings.Replace(cmt, "ARTIST=", "", 1)
+					resultTag.artist = tag
+				} else if strings.HasPrefix(cmt, "date=") {
+					tag := strings.Replace(cmt, "date=", "", 1)
+					resultTag.id3.date = tag
+				} else if strings.HasPrefix(cmt, "DATE=") {
+					tag := strings.Replace(cmt, "DATE=", "", 1)
+					resultTag.id3.date = tag
+				} else if strings.HasPrefix(cmt, "title=") {
+					tag := strings.Replace(cmt, "title=", "", 1)
+					resultTag.title = tag
+				} else if strings.HasPrefix(cmt, "TITLE=") {
+					tag := strings.Replace(cmt, "TITLE=", "", 1)
+					resultTag.title = tag
+				} else if strings.HasPrefix(cmt, "genre=") {
+					tag := strings.Replace(cmt, "genre=", "", 1)
+					resultTag.genre = tag
+				} else if strings.HasPrefix(cmt, "GENRE=") {
+					tag := strings.Replace(cmt, "GENRE=", "", 1)
+					resultTag.genre = tag
+				}
+			}
+		}
+		log.Println("DONE PARSING FILE")
+		file, err := os.Open(filepath)
+		if err != nil {
+			log.Println("Error while opening file: ", err)
+			return nil, err
+		}
+		f, err := flac.ParseBytes(file)
+		if err != nil {
+			log.Fatal("Error opening album image")
+		}
+		var pic *flacpicture.MetadataBlockPicture
+		for _, meta := range f.Meta {
+			if meta.Type == flac.Picture {
+				pic, err = flacpicture.ParseFromMetaDataBlock(*meta)
+				if err != nil {
+					log.Println("Error opening album art")
+				}
+			}
+		}
+		if pic != nil {
+			img, _, err := image.Decode(bytes.NewReader(pic.ImageData))
+			if err != nil {
+				log.Fatal("Error opening album image")
+			}
+			resultTag.albumArt = &img
+		} else {
+			resultTag.albumArt = nil
+		}
 	} else {
 		f, err := os.Open(filepath)
 		if err != nil {
