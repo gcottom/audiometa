@@ -224,6 +224,20 @@ func parse(filepath string) (*IDTag, error) {
 		} else {
 			resultTag.albumArt = nil
 		}
+	} else if *fileType == "ogg"{
+		f, err := os.Open(filepath)
+		if err != nil {
+			log.Fatal("Error while opening file: ", err)
+			return nil, err
+		}
+		defer f.Close()
+		tag, err := ReadOGGTags(f)
+		if err != nil {
+			log.Fatal("Error reading ogg tag", err)
+			return nil, err
+		}
+		resultTag = *tag
+		
 	} else {
 		f, err := os.Open(filepath)
 		if err != nil {

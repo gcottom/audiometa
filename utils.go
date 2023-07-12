@@ -2,6 +2,7 @@ package mp3mp4tag
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"io"
 	"strings"
@@ -12,7 +13,7 @@ func getFileType(filepath string) (*string, error) {
 	lastIndex := len(fileTypeArr) - 1
 	fileType := fileTypeArr[lastIndex]
 	fileType = strings.ToLower(fileType)
-	if fileType == "mp3" || fileType == "m4p" || fileType == "m4a" || fileType == "m4b" || fileType == "mp4" || fileType == "flac" {
+	if fileType == "mp3" || fileType == "m4p" || fileType == "m4a" || fileType == "m4b" || fileType == "mp4" || fileType == "flac" || fileType == "ogg" {
 		return &fileType, nil
 	} else {
 		return nil, errors.New("Format: Unsupported Format: " + fileType)
@@ -54,4 +55,11 @@ func readString(r io.Reader, n uint) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+func readUint32LittleEndian(r io.Reader) (uint32, error) {
+	b, err := readBytes(r, 4)
+	if err != nil {
+		return 0, err
+	}
+	return binary.LittleEndian.Uint32(b), nil
 }

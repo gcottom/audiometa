@@ -36,3 +36,13 @@ func TestReadFlacTags(t *testing.T) {
 		t.Fatal("Data parsed was blank!")
 	}
 }
+func TestReadOggTags(t *testing.T) {
+	path, _ := filepath.Abs("testdata/testdata-ogg.ogg")
+	tag, err := parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	if tag.artist == "" || tag.album == "" || tag.title == "" {
+		t.Fatal("Data parsed was blank!")
+	}
+}
