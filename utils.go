@@ -28,6 +28,21 @@ func getInt(b []byte) int {
 	}
 	return n
 }
+func readInt(r io.Reader, n uint) (int, error) {
+	b, err := readBytes(r, n)
+	if err != nil {
+		return 0, err
+	}
+	return getInt(b), nil
+}
+
+func readUint(r io.Reader, n uint) (uint, error) {
+	x, err := readInt(r, n)
+	if err != nil {
+		return 0, err
+	}
+	return uint(x), nil
+}
 
 // readBytesMaxUpfront is the max up-front allocation allowed
 const readBytesMaxUpfront = 10 << 20 // 10MB

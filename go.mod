@@ -8,6 +8,7 @@ require (
 	github.com/go-flac/flacpicture v0.3.0
 	github.com/go-flac/flacvorbis v0.2.0
 	github.com/go-flac/go-flac v1.0.0
+	mccoy.space/g/ogg v0.0.0-20221103053400-1ea94e6f3152
 )
 
 require (
@@ -16,5 +17,3 @@ require (
 	github.com/sunfish-shogi/bufseekio v0.1.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 )
-
-replace github.com/dhowden/tag v0.0.0 => github.com/gcottom/tag v0.1.0

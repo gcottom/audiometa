@@ -255,6 +255,8 @@ func (tag *IDTag) Save() error {
 			return err
 		}
 
+	} else if *fileType == "ogg" {
+		saveVorbisTags(tag)
 	}
 	return nil
 }
