@@ -142,7 +142,7 @@ func TestWriteTagsM4AFromEmpty(t *testing.T) {
 	}
 }
 func TestUpdateTagsM4A(t *testing.T) {
-	TestWriteTagsMP3FromEmpty(t)
+	TestWriteTagsM4AFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-m4a-nonEmpty.m4a")
 	tag, err := parse(path)
 	if err != nil {
@@ -228,7 +228,7 @@ func TestWriteTagsFlacFromEmpty(t *testing.T) {
 	}
 }
 func TestUpdateTagsFlac(t *testing.T) {
-	TestWriteTagsMP3FromEmpty(t)
+	TestWriteTagsFlacFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-flac-nonEmpty.flac")
 	tag, err := parse(path)
 	if err != nil {
@@ -314,8 +314,94 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	}
 }
 func TestUpdateTagsOggVorbis(t *testing.T) {
-	TestWriteTagsMP3FromEmpty(t)
+	TestWriteTagsOggVorbisFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+	tag, err := parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.ClearAllTags()
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag.SetArtist("TestArtist2")
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
+		t.Fatal("Failed to validate new tags")
+	}
+}
+func TestWriteEmptyTagsOggOpus(t *testing.T) {
+	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+	tag, err := parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.ClearAllTags()
+	err = SaveTag(tag)
+	if err != nil {
+		t.Log(err)
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
+		t.Fatal("Failed to remove tags for empty tag test!")
+	}
+}
+func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
+	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+	tag, err := parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.ClearAllTags()
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
+	err = SaveTag(tag)
+	if err != nil {
+		t.Fatal("Error saving!")
+	}
+	tag, err = parse(path)
+	if err != nil {
+		t.Fatal("Error parsing!")
+	}
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
+		t.Fatal("Failed to validate new tags")
+	}
+}
+func TestUpdateTagsOggOpus(t *testing.T) {
+	TestWriteTagsOggOpusFromEmpty(t)
+	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
 	tag, err := parse(path)
 	if err != nil {
 		t.Fatal("Error parsing!")

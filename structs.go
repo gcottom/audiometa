@@ -21,6 +21,7 @@ type IDTag struct {
 	bpm         string
 	id3         ID3Frames
 	fileUrl     string
+	codec       string
 }
 type ID3Frames struct {
 	copyrightMsg string //Copyright Message

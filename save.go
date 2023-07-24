@@ -256,7 +256,11 @@ func (tag *IDTag) Save() error {
 		}
 
 	} else if *fileType == "ogg" {
-		saveVorbisTags(tag)
+		if tag.codec == "vorbis" {
+			saveVorbisTags(tag)
+		} else if tag.codec == "opus" {
+			saveOpusTags(tag)
+		}
 	}
 	return nil
 }
