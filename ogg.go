@@ -354,6 +354,9 @@ func clearTags(path string) error {
 	defer inputFile.Close()
 	decoder := ogg.NewDecoder(inputFile)
 	tempOut, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 	tempOut += "/output_file.ogg"
 	outputFile, err := os.Create(tempOut)
 	if err != nil {
@@ -370,7 +373,6 @@ func clearTags(path string) error {
 		return err
 	}
 	var vorbisCommentPage *ogg.Page
-	counter := 0
 	for {
 		page, err := decoder.Decode()
 		if err != nil {
@@ -381,7 +383,6 @@ func clearTags(path string) error {
 		}
 
 		if hasVorbisCommentPrefix(page.Packets) {
-			fmt.Printf("Vorbis comment on page: %d\n", counter)
 			vorbisCommentPage = &page
 			emptyImage := []byte{}
 			emptyComments := []string{}
@@ -411,11 +412,13 @@ func clearTags(path string) error {
 				}
 			}
 		}
-		counter++
 	}
 	inputFile.Close()
 	outputFile.Close()
 	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
 	os.Rename(tempOut, abs)
 	return nil
 }
