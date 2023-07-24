@@ -130,9 +130,6 @@ func (o *oggDemuxer) Read(r io.Reader) ([][]byte, error) {
 
 // ReadOGGTags reads OGG metadata from the io.ReadSeeker, returning the resulting
 // metadata in a Metadata implementation, or non-nil error if there was a problem.
-// See http://www.xiph.org/vorbis/doc/Vorbis_I_spec.html
-// and http://www.xiph.org/ogg/doc/framing.html for details.
-// For Opus see https://tools.ietf.org/html/rfc7845
 func ReadOGGTags(r io.Reader) (*IDTag, error) {
 	od := &oggDemuxer{}
 	for {
@@ -240,6 +237,12 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 			resultTag.genre = tag
 		} else if strings.HasPrefix(cmt, "GENRE=") {
 			tag := strings.Replace(cmt, "GENRE=", "", 1)
+			resultTag.genre = tag
+		} else if strings.HasPrefix(cmt, "comment=") {
+			tag := strings.Replace(cmt, "comment=", "", 1)
+			resultTag.genre = tag
+		} else if strings.HasPrefix(cmt, "COMMENT=") {
+			tag := strings.Replace(cmt, "COMMENT=", "", 1)
 			resultTag.genre = tag
 		}
 	}
@@ -381,6 +384,23 @@ func clearTagsOpus(path string) error {
 			err = encoder.Encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
 			if err != nil {
 				return err
+			}
+			if len(page.Packets) == 1 {
+				page, err := decoder.DecodeOGG()
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					return err
+				}
+				if page.Type == COP {
+					if len(page.Packets) > 1 {
+						err = encoder.Encode(page.Granule, page.Packets[1:])
+						if err != nil {
+							return err
+						}
+					}
+				}
 			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
@@ -647,6 +667,23 @@ func clearTagsVorbis(path string) error {
 			if err != nil {
 				return err
 			}
+			if len(page.Packets) == 1 {
+				page, err := decoder.DecodeOGG()
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					return err
+				}
+				if page.Type == COP {
+					if len(page.Packets) > 1 {
+						err = encoder.Encode(page.Granule, page.Packets[1:])
+						if err != nil {
+							return err
+						}
+					}
+				}
+			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
 			if page.Type == EOS {
@@ -739,6 +776,9 @@ func saveVorbisTags(tag *IDTag) error {
 			}
 			if tag.albumArtist != "" {
 				commentFields = append(commentFields, "ALBUMARTIST="+tag.albumArtist)
+			}
+			if tag.comments != "" {
+				commentFields = append(commentFields, "COMMENT="+tag.comments)
 			}
 			img := []byte{}
 			if tag.albumArt != nil {
