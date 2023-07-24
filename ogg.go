@@ -13,8 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"mccoy.space/g/ogg"
 )
 
 var (
@@ -49,17 +47,6 @@ func oggCRCUpdate(crc uint32, tab *crc32Table, p []byte) uint32 {
 		crc = (crc << 8) ^ tab[byte(crc>>24)^v]
 	}
 	return crc
-}
-
-type oggPageHeader struct {
-	Magic           [4]byte // "OggS"
-	Version         uint8
-	Flags           uint8
-	GranulePosition uint64
-	SerialNumber    uint32
-	SequenceNumber  uint32
-	CRC             uint32
-	Segments        uint8
 }
 
 type oggDemuxer struct {
@@ -352,7 +339,7 @@ func clearTags(path string) error {
 		return err
 	}
 	defer inputFile.Close()
-	decoder := ogg.NewDecoder(inputFile)
+	decoder := NewOGGDecoder(inputFile)
 	tempOut, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -363,18 +350,18 @@ func clearTags(path string) error {
 		return err
 	}
 	defer outputFile.Close()
-	page, err := decoder.Decode()
+	page, err := decoder.DecodeOGG()
 	if err != nil {
 		return err
 	}
-	encoder := ogg.NewEncoder(page.Serial, outputFile)
+	encoder := NewOGGEncoder(page.Serial, outputFile)
 	err = encoder.EncodeBOS(page.Granule, page.Packets)
 	if err != nil {
 		return err
 	}
-	var vorbisCommentPage *ogg.Page
+	var vorbisCommentPage *OGGPage
 	for {
-		page, err := decoder.Decode()
+		page, err := decoder.DecodeOGG()
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -393,14 +380,9 @@ func clearTags(path string) error {
 			if err != nil {
 				return err
 			}
-		} else if len(page.Packets) > 0 && len(page.Packets[0]) >= 7 && string(page.Packets[0][:7]) == "\x05vorbis" {
-			err = encoder.Encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
-			if err != nil {
-				return err
-			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
-			if page.Type == ogg.EOS {
+			if page.Type == EOS {
 				err = encoder.EncodeEOS(page.Granule, page.Packets)
 				if err != nil {
 					return err
@@ -436,7 +418,7 @@ func saveVorbisTags(tag *IDTag) error {
 		return err
 	}
 	defer inputFile.Close()
-	decoder := ogg.NewDecoder(inputFile)
+	decoder := NewOGGDecoder(inputFile)
 
 	// Step 3: Create a temporary output file
 	tempOut, err := os.UserHomeDir()
@@ -449,18 +431,18 @@ func saveVorbisTags(tag *IDTag) error {
 		return err
 	}
 	defer outputFile.Close()
-	page, err := decoder.Decode()
+	page, err := decoder.DecodeOGG()
 	if err != nil {
 		return err
 	}
-	encoder := ogg.NewEncoder(page.Serial, outputFile)
+	encoder := NewOGGEncoder(page.Serial, outputFile)
 	err = encoder.EncodeBOS(page.Granule, page.Packets)
 	if err != nil {
 		return err
 	}
-	var vorbisCommentPage *ogg.Page
+	var vorbisCommentPage *OGGPage
 	for {
-		page, err := decoder.Decode()
+		page, err := decoder.DecodeOGG()
 		if err != nil {
 			if err == io.EOF {
 				break // Reached the end of the input Ogg stream
@@ -515,7 +497,7 @@ func saveVorbisTags(tag *IDTag) error {
 			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
-			if page.Type == ogg.EOS {
+			if page.Type == EOS {
 				err = encoder.EncodeEOS(page.Granule, page.Packets)
 				if err != nil {
 					return err
