@@ -10,11 +10,9 @@ import (
 	"image/jpeg"
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"mccoy.space/g/ogg"
 )
@@ -362,9 +360,17 @@ func clearTags(path string) error {
 		return err
 	}
 	defer outputFile.Close()
-
-	encoder := ogg.NewEncoder(rand.New(rand.NewSource(time.Now().UnixNano())).Uint32(), outputFile)
+	page, err := decoder.Decode()
+	if err != nil {
+		return err
+	}
+	encoder := ogg.NewEncoder(page.Serial, outputFile)
+	err = encoder.EncodeBOS(page.Granule, page.Packets)
+	if err != nil {
+		return err
+	}
 	var vorbisCommentPage *ogg.Page
+	counter := 0
 	for {
 		page, err := decoder.Decode()
 		if err != nil {
@@ -375,22 +381,37 @@ func clearTags(path string) error {
 		}
 
 		if hasVorbisCommentPrefix(page.Packets) {
+			fmt.Printf("Vorbis comment on page: %d\n", counter)
 			vorbisCommentPage = &page
-		} else {
-			err = encoder.Encode(page.Granule, page.Packets)
+			emptyImage := []byte{}
+			emptyComments := []string{}
+			commentPacket := createVorbisCommentPacket(emptyComments, emptyImage)
+
+			vorbisCommentPage.Packets[0] = commentPacket
+			err = encoder.Encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
 			if err != nil {
 				return err
 			}
+		} else if len(page.Packets) > 0 && len(page.Packets[0]) >= 7 && string(page.Packets[0][:7]) == "\x05vorbis" {
+			err = encoder.Encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Write non-Vorbis comment pages to the output file
+			if page.Type == ogg.EOS {
+				err = encoder.EncodeEOS(page.Granule, page.Packets)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = encoder.Encode(page.Granule, page.Packets)
+				if err != nil {
+					return err
+				}
+			}
 		}
-	}
-	emptyImage := []byte{}
-	emptyComments := []string{}
-	commentPacket := createVorbisCommentPacket(emptyComments, emptyImage)
-
-	vorbisCommentPage.Packets[0] = commentPacket
-	err = encoder.Encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
-	if err != nil {
-		return err
+		counter++
 	}
 	inputFile.Close()
 	outputFile.Close()
@@ -425,10 +446,15 @@ func saveVorbisTags(tag *IDTag) error {
 		return err
 	}
 	defer outputFile.Close()
-
-	// Step 4: Create an Ogg encoder for the output file
-	encoder := ogg.NewEncoder(rand.New(rand.NewSource(time.Now().UnixNano())).Uint32(), outputFile)
-
+	page, err := decoder.Decode()
+	if err != nil {
+		return err
+	}
+	encoder := ogg.NewEncoder(page.Serial, outputFile)
+	err = encoder.EncodeBOS(page.Granule, page.Packets)
+	if err != nil {
+		return err
+	}
 	var vorbisCommentPage *ogg.Page
 	for {
 		page, err := decoder.Decode()
@@ -442,58 +468,63 @@ func saveVorbisTags(tag *IDTag) error {
 		// Find the Vorbis comment page and store it
 		if hasVorbisCommentPrefix(page.Packets) {
 			vorbisCommentPage = &page
-		} else {
-			// Write non-Vorbis comment pages to the output file
-			err = encoder.Encode(page.Granule, page.Packets)
+			// Step 5: Prepare the new Vorbis comment packet with updated metadata and album art
+			commentFields := []string{}
+			if tag.album != "" {
+				commentFields = append(commentFields, "ALBUM="+tag.album)
+			}
+			if tag.artist != "" {
+				commentFields = append(commentFields, "ARTIST="+tag.artist)
+			}
+			if tag.genre != "" {
+				commentFields = append(commentFields, "GENRE="+tag.genre)
+			}
+			if tag.title != "" {
+				commentFields = append(commentFields, "TITLE="+tag.title)
+			}
+			if tag.id3.date != "" {
+				commentFields = append(commentFields, "DATE="+tag.title)
+			}
+			if tag.albumArtist != "" {
+				commentFields = append(commentFields, "ALBUMARTIST="+tag.albumArtist)
+			}
+			img := []byte{}
+			if tag.albumArt != nil {
+				// Convert album art image to JPEG format
+				buf := new(bytes.Buffer)
+				err = jpeg.Encode(buf, *tag.albumArt, nil)
+				if err != nil {
+					return err
+				}
+				img = createMetadataBlockPicture(buf.Bytes())
+			}
+
+			// Create the new Vorbis comment packet
+			commentPacket := createVorbisCommentPacket(commentFields, img)
+
+			// Replace the Vorbis comment packet in the original page with the new packet
+			vorbisCommentPage.Packets[0] = commentPacket
+
+			// Step 6: Write the updated Vorbis comment page to the output file
+			err = encoder.Encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
 			if err != nil {
 				return err
 			}
+		} else {
+			// Write non-Vorbis comment pages to the output file
+			if page.Type == ogg.EOS {
+				err = encoder.EncodeEOS(page.Granule, page.Packets)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = encoder.Encode(page.Granule, page.Packets)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
-
-	// Step 5: Prepare the new Vorbis comment packet with updated metadata and album art
-	commentFields := []string{}
-	if tag.album != "" {
-		commentFields = append(commentFields, "ALBUM="+tag.album)
-	}
-	if tag.artist != "" {
-		commentFields = append(commentFields, "ARTIST="+tag.artist)
-	}
-	if tag.genre != "" {
-		commentFields = append(commentFields, "GENRE="+tag.genre)
-	}
-	if tag.title != "" {
-		commentFields = append(commentFields, "TITLE="+tag.title)
-	}
-	if tag.id3.date != "" {
-		commentFields = append(commentFields, "DATE="+tag.title)
-	}
-	if tag.albumArtist != "" {
-		commentFields = append(commentFields, "ALBUMARTIST="+tag.albumArtist)
-	}
-	img := []byte{}
-	if tag.albumArt != nil {
-		// Convert album art image to JPEG format
-		buf := new(bytes.Buffer)
-		err = jpeg.Encode(buf, *tag.albumArt, nil)
-		if err != nil {
-			return err
-		}
-		img = createMetadataBlockPicture(buf.Bytes())
-	}
-
-	// Create the new Vorbis comment packet
-	commentPacket := createVorbisCommentPacket(commentFields, img)
-
-	// Replace the Vorbis comment packet in the original page with the new packet
-	vorbisCommentPage.Packets[0] = commentPacket
-
-	// Step 6: Write the updated Vorbis comment page to the output file
-	err = encoder.Encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
-	if err != nil {
-		return err
-	}
-
 	// Step 7: Close and rename the files to the original file
 	inputFile.Close()
 	outputFile.Close()
@@ -525,6 +556,7 @@ func createVorbisCommentPacket(commentFields []string, albumArt []byte) []byte {
 	}
 	vorbisCommentPacket = append([]byte("\x03vorbis"), vorbisCommentPacket...)
 	vorbisCommentPacket = append(vorbisCommentPacket, albumArt...)
+	vorbisCommentPacket = append(vorbisCommentPacket, []byte("\x01")...)
 	return vorbisCommentPacket
 }
 
