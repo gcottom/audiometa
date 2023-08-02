@@ -197,9 +197,7 @@ func (tag *IDTag) Save() error {
 			return err
 		}
 		cmts, idx := extractFLACComment(tag.fileUrl)
-		if cmts == nil {
-			cmts = flacvorbis.New()
-		}
+		cmts = flacvorbis.New()
 		err = cmts.Add(flacvorbis.FIELD_TITLE, tag.title)
 		if err != nil {
 			log.Println(err)
