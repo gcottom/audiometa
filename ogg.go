@@ -400,6 +400,11 @@ func clearTagsOpus(path string) error {
 							return err
 						}
 					}
+				} else {
+					err = encoder.Encode(page.Granule, page.Packets)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		} else {
@@ -681,6 +686,11 @@ func clearTagsVorbis(path string) error {
 						if err != nil {
 							return err
 						}
+					}
+				} else {
+					err = encoder.Encode(page.Granule, page.Packets)
+					if err != nil {
+						return err
 					}
 				}
 			}
