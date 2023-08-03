@@ -508,7 +508,7 @@ func saveOpusTags(tag *IDTag) error {
 				if err != nil {
 					return err
 				}
-				img = createMetadataBlockPicture(buf.Bytes())
+				img, _ = createMetadataBlockPicture(buf.Bytes())
 			}
 
 			// Create the new Vorbis comment packet
@@ -548,83 +548,6 @@ func saveOpusTags(tag *IDTag) error {
 	return nil
 }
 
-func hasOpusCommentPrefix(packets [][]byte) bool {
-	return len(packets) > 0 && len(packets[0]) >= 8 && string(packets[0][:8]) == "OpusTags"
-}
-func createOpusCommentPacket(commentFields []string, albumArt []byte) []byte {
-	vendorString := "mp3mp4tag"
-
-	buf := make([]byte, 4)
-	binary.LittleEndian.PutUint32(buf, uint32(len(vendorString)))
-	vorbisCommentPacket := append(buf, []byte(vendorString)...)
-
-	binary.LittleEndian.PutUint32(buf, uint32(len(commentFields)))
-	vorbisCommentPacket = append(vorbisCommentPacket, buf...)
-
-	for _, field := range commentFields {
-		binary.LittleEndian.PutUint32(buf, uint32(len(field)))
-		vorbisCommentPacket = append(vorbisCommentPacket, buf...)
-		vorbisCommentPacket = append(vorbisCommentPacket, []byte(field)...)
-	}
-	vorbisCommentPacket = append([]byte("OpusTags"), vorbisCommentPacket...)
-	vorbisCommentPacket = append(vorbisCommentPacket, albumArt...)
-	return vorbisCommentPacket
-}
-
-func createMetadataBlockPicture(albumArtData []byte) []byte {
-	// Replace these values with the appropriate information about the album art
-	description := "Cover" // Description of the album art image
-	width := uint32(100)   // Replace with the width of the image in pixels
-	height := uint32(100)  // Replace with the height of the image in pixels
-	depth := uint32(24)    // Replace with the color depth of the image in bits per pixel
-	colors := uint32(0)    // Replace with the number of colors in the image
-	mimeType := "image/jpeg"
-	// Create the METADATA_BLOCK_PICTURE field with the image data
-	imageType := []byte("\x00\x00\x00\x03") // 3 indicates the MIME type is URL
-
-	// Append the uint32 values as big endian byte representations
-	tempBuf := make([]byte, 4)
-
-	// Create the METADATA_BLOCK_PICTURE field with the image data
-	blockData := []byte{}
-	blockData = append(blockData, imageType...)
-	blockData = append(blockData, []byte(mimeType)...)
-	blockData = append(blockData, byte(0)) // Null-terminated string
-	blockData = append(blockData, byte(0)) // Optional field for the image index (converted to byte)
-	blockData = append(blockData, byte(0)) // Optional field for the image count (converted to byte)
-	blockData = append(blockData, []byte(description)...)
-	blockData = append(blockData, byte(0)) // Null-terminated string
-
-	// Append the uint32 values as big endian byte representations
-	binary.BigEndian.PutUint32(tempBuf, width)
-	blockData = append(blockData, tempBuf...)
-
-	binary.BigEndian.PutUint32(tempBuf, height)
-	blockData = append(blockData, tempBuf...)
-
-	binary.BigEndian.PutUint32(tempBuf, depth)
-	blockData = append(blockData, tempBuf...)
-
-	binary.BigEndian.PutUint32(tempBuf, colors)
-	blockData = append(blockData, tempBuf...)
-
-	// Append the length of albumArtData as a big endian uint32
-	binary.BigEndian.PutUint32(tempBuf, uint32(len(albumArtData)))
-	blockData = append(blockData, tempBuf...)
-
-	blockData = append(blockData, albumArtData...)
-
-	// Calculate the length of the METADATA_BLOCK_PICTURE field
-	blockLen := uint32(len(blockData))
-
-	// Create the METADATA_BLOCK_PICTURE field with the calculated length and data
-	pictureBlock := make([]byte, 4)
-	binary.BigEndian.PutUint32(pictureBlock, blockLen)
-
-	pictureBlock = append(pictureBlock, blockData...)
-
-	return pictureBlock
-}
 func clearTagsVorbis(path string) error {
 	inputFile, err := os.Open(path)
 	if err != nil {
@@ -798,7 +721,7 @@ func saveVorbisTags(tag *IDTag) error {
 				if err != nil {
 					return err
 				}
-				img = createMetadataBlockPicture(buf.Bytes())
+				img, _ = createMetadataBlockPicture(buf.Bytes())
 			}
 
 			// Create the new Vorbis comment packet
@@ -837,7 +760,39 @@ func saveVorbisTags(tag *IDTag) error {
 
 	return nil
 }
+func hasOpusCommentPrefix(packets [][]byte) bool {
+	return len(packets) > 0 && len(packets[0]) >= 8 && string(packets[0][:8]) == "OpusTags"
+}
+func createOpusCommentPacket(commentFields []string, albumArt []byte) []byte {
+	vendorString := "mp3mp4tag"
 
+	buf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(buf, uint32(len(vendorString)))
+	vorbisCommentPacket := append(buf, []byte(vendorString)...)
+
+	if len(albumArt) > 0 {
+		binary.LittleEndian.PutUint32(buf, uint32(len(commentFields)+1))
+	} else {
+		binary.LittleEndian.PutUint32(buf, uint32(len(commentFields)))
+	}
+	vorbisCommentPacket = append(vorbisCommentPacket, buf...)
+
+	for _, field := range commentFields {
+		binary.LittleEndian.PutUint32(buf, uint32(len(field)))
+		vorbisCommentPacket = append(vorbisCommentPacket, buf...)
+		vorbisCommentPacket = append(vorbisCommentPacket, []byte(field)...)
+	}
+	vorbisCommentPacket = append([]byte("OpusTags"), vorbisCommentPacket...)
+	if len(albumArt) > 1 {
+		albumArtBase64 := base64.StdEncoding.EncodeToString(albumArt)
+		fieldLength := len("METADATA_BLOCK_PICTURE=") + len(albumArtBase64)
+		binary.LittleEndian.PutUint32(buf, uint32(fieldLength))
+		vorbisCommentPacket = append(vorbisCommentPacket, buf...)
+		vorbisCommentPacket = append(vorbisCommentPacket, []byte("METADATA_BLOCK_PICTURE=")...)
+		vorbisCommentPacket = append(vorbisCommentPacket, []byte(albumArtBase64)...)
+	}
+	return vorbisCommentPacket
+}
 func hasVorbisCommentPrefix(packets [][]byte) bool {
 	return len(packets) > 0 && len(packets[0]) >= 7 && string(packets[0][:7]) == "\x03vorbis"
 }
@@ -847,8 +802,11 @@ func createVorbisCommentPacket(commentFields []string, albumArt []byte) []byte {
 	buf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(buf, uint32(len(vendorString)))
 	vorbisCommentPacket := append(buf, []byte(vendorString)...)
-
-	binary.LittleEndian.PutUint32(buf, uint32(len(commentFields)))
+	if len(albumArt) > 0 {
+		binary.LittleEndian.PutUint32(buf, uint32(len(commentFields)+1))
+	} else {
+		binary.LittleEndian.PutUint32(buf, uint32(len(commentFields)))
+	}
 	vorbisCommentPacket = append(vorbisCommentPacket, buf...)
 
 	for _, field := range commentFields {
@@ -857,7 +815,79 @@ func createVorbisCommentPacket(commentFields []string, albumArt []byte) []byte {
 		vorbisCommentPacket = append(vorbisCommentPacket, []byte(field)...)
 	}
 	vorbisCommentPacket = append([]byte("\x03vorbis"), vorbisCommentPacket...)
-	vorbisCommentPacket = append(vorbisCommentPacket, albumArt...)
+	if len(albumArt) > 1 {
+		albumArtBase64 := base64.StdEncoding.EncodeToString(albumArt)
+		fieldLength := len("METADATA_BLOCK_PICTURE=") + len(albumArtBase64)
+		binary.LittleEndian.PutUint32(buf, uint32(fieldLength))
+		vorbisCommentPacket = append(vorbisCommentPacket, buf...)
+		vorbisCommentPacket = append(vorbisCommentPacket, []byte("METADATA_BLOCK_PICTURE=")...)
+		vorbisCommentPacket = append(vorbisCommentPacket, []byte(albumArtBase64)...)
+	}
+
 	vorbisCommentPacket = append(vorbisCommentPacket, []byte("\x01")...)
 	return vorbisCommentPacket
+}
+func createMetadataBlockPicture(albumArtData []byte) ([]byte, error) {
+	mimeType := "image/jpeg" // This should be dynamic based on the actual image type.
+	description := "Cover"   // Description of the album art image
+	img, _, err := image.DecodeConfig(bytes.NewReader(albumArtData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get image config: %w", err)
+	}
+	res := bytes.NewBuffer([]byte{})
+	res.Write(encodeUint32(uint32(3)))
+	res.Write(encodeUint32(uint32(len(mimeType))))
+	res.Write([]byte(mimeType))
+	res.Write(encodeUint32(uint32(len(description))))
+	res.Write([]byte(description))
+	res.Write(encodeUint32(uint32(img.Width)))
+	res.Write(encodeUint32(uint32(img.Height)))
+	res.Write(encodeUint32(24))
+	res.Write(encodeUint32(0))
+	res.Write(encodeUint32(uint32(len(albumArtData))))
+	res.Write(albumArtData)
+	/*// Start creating the block.
+	var block bytes.Buffer
+
+	// Picture type.
+	if err := binary.Write(&block, binary.BigEndian, uint32(3)); err != nil { // 3 = Front cover.
+		return nil, err
+	}
+	// Get image's dimension.
+
+	// MIME type.
+	mimeType := "image/jpeg" // This should be dynamic based on the actual image type.
+	if err := binary.Write(&block, binary.BigEndian, uint32(len(mimeType))); err != nil {
+		return nil, err
+	}
+	block.WriteString(mimeType)
+
+	// Description.
+	if err := binary.Write(&block, binary.BigEndian, uint32(len(description))); err != nil {
+		return nil, err
+	}
+	block.WriteString(description)
+
+	// Image parameters.
+	if err := binary.Write(&block, binary.BigEndian, uint32(img.Width)); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(&block, binary.BigEndian, uint32(img.Height)); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(&block, binary.BigEndian, uint32(24)); err != nil { // Assume 24 bit depth.
+		return nil, err
+	}
+	if err := binary.Write(&block, binary.BigEndian, uint32(0)); err != nil { // No indexed color.
+		return nil, err
+	}
+	albumArtBase64 := base64.StdEncoding.EncodeToString(albumArtData)
+
+	// Image data.
+	if err := binary.Write(&block, binary.BigEndian, uint32(len(albumArtBase64))); err != nil {
+		return nil, err
+	}
+	block.Write([]byte(albumArtBase64))
+	*/
+	return res.Bytes(), nil
 }

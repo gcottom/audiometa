@@ -301,6 +301,7 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
+	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
@@ -387,6 +388,7 @@ func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
+	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
