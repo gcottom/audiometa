@@ -174,6 +174,7 @@ type metadataVorbis struct {
 	p *Picture
 }
 
+// Read the vorbis comments from an ogg vorbis or ogg opus file
 func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 	var resultTag IDTag
 	vendorLen, err := readUint32LittleEndian(r)
@@ -198,7 +199,6 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 			return nil, err
 		}
 		cmt, err := readString(r, uint(l))
-		fmt.Println(cmt)
 		if err != nil {
 			return nil, err
 		}
@@ -263,6 +263,8 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 	}
 	return &resultTag, nil
 }
+
+// Read the vorbis comment picture block
 func (m *metadataVorbis) readPictureBlock(r io.Reader) error {
 	b, err := readInt(r, 4)
 	if err != nil {
@@ -338,6 +340,7 @@ func (m *metadataVorbis) readPictureBlock(r io.Reader) error {
 	return nil
 }
 
+// Clears the comment header in an ogg OPUS file and writes an empty comment header
 func clearTagsOpus(path string) error {
 	inputFile, err := os.Open(path)
 	if err != nil {
@@ -432,6 +435,7 @@ func clearTagsOpus(path string) error {
 	return nil
 }
 
+// Saves the tags for an ogg Opus file
 func saveOpusTags(tag *IDTag) error {
 	// Step 1: Clear existing tags from the file
 	err := clearTagsOpus(tag.fileUrl)
@@ -548,6 +552,7 @@ func saveOpusTags(tag *IDTag) error {
 	return nil
 }
 
+// Clears the vorbis comment header and writes an empty comment header
 func clearTagsVorbis(path string) error {
 	inputFile, err := os.Open(path)
 	if err != nil {
@@ -642,6 +647,7 @@ func clearTagsVorbis(path string) error {
 	return nil
 }
 
+// Saves the given tag structure to a ogg vorbis audio file
 func saveVorbisTags(tag *IDTag) error {
 	// Step 1: Clear existing tags from the file
 	err := clearTagsVorbis(tag.fileUrl)
@@ -760,9 +766,13 @@ func saveVorbisTags(tag *IDTag) error {
 
 	return nil
 }
+
+// Checks if the OpusTags comment header is present
 func hasOpusCommentPrefix(packets [][]byte) bool {
 	return len(packets) > 0 && len(packets[0]) >= 8 && string(packets[0][:8]) == "OpusTags"
 }
+
+// Creates the comment packet for the Opus spec from the given commentFields and albumArt. The only difference between vorbis and opus is the "OpusTags" header and the framing bit
 func createOpusCommentPacket(commentFields []string, albumArt []byte) []byte {
 	vendorString := "mp3mp4tag"
 
@@ -793,9 +803,13 @@ func createOpusCommentPacket(commentFields []string, albumArt []byte) []byte {
 	}
 	return vorbisCommentPacket
 }
+
+// Checks if the vorbis comment header is present
 func hasVorbisCommentPrefix(packets [][]byte) bool {
 	return len(packets) > 0 && len(packets[0]) >= 7 && string(packets[0][:7]) == "\x03vorbis"
 }
+
+// Creates the vorbis comment packet from the given commentFields and albumArt
 func createVorbisCommentPacket(commentFields []string, albumArt []byte) []byte {
 	vendorString := "mp3mp4tag"
 
@@ -827,9 +841,11 @@ func createVorbisCommentPacket(commentFields []string, albumArt []byte) []byte {
 	vorbisCommentPacket = append(vorbisCommentPacket, []byte("\x01")...)
 	return vorbisCommentPacket
 }
+
+// Creates the picture block which holds the album art in the vorbis comment header
 func createMetadataBlockPicture(albumArtData []byte) ([]byte, error) {
-	mimeType := "image/jpeg" // This should be dynamic based on the actual image type.
-	description := "Cover"   // Description of the album art image
+	mimeType := "image/jpeg"
+	description := "Cover"
 	img, _, err := image.DecodeConfig(bytes.NewReader(albumArtData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image config: %w", err)
@@ -846,48 +862,5 @@ func createMetadataBlockPicture(albumArtData []byte) ([]byte, error) {
 	res.Write(encodeUint32(0))
 	res.Write(encodeUint32(uint32(len(albumArtData))))
 	res.Write(albumArtData)
-	/*// Start creating the block.
-	var block bytes.Buffer
-
-	// Picture type.
-	if err := binary.Write(&block, binary.BigEndian, uint32(3)); err != nil { // 3 = Front cover.
-		return nil, err
-	}
-	// Get image's dimension.
-
-	// MIME type.
-	mimeType := "image/jpeg" // This should be dynamic based on the actual image type.
-	if err := binary.Write(&block, binary.BigEndian, uint32(len(mimeType))); err != nil {
-		return nil, err
-	}
-	block.WriteString(mimeType)
-
-	// Description.
-	if err := binary.Write(&block, binary.BigEndian, uint32(len(description))); err != nil {
-		return nil, err
-	}
-	block.WriteString(description)
-
-	// Image parameters.
-	if err := binary.Write(&block, binary.BigEndian, uint32(img.Width)); err != nil {
-		return nil, err
-	}
-	if err := binary.Write(&block, binary.BigEndian, uint32(img.Height)); err != nil {
-		return nil, err
-	}
-	if err := binary.Write(&block, binary.BigEndian, uint32(24)); err != nil { // Assume 24 bit depth.
-		return nil, err
-	}
-	if err := binary.Write(&block, binary.BigEndian, uint32(0)); err != nil { // No indexed color.
-		return nil, err
-	}
-	albumArtBase64 := base64.StdEncoding.EncodeToString(albumArtData)
-
-	// Image data.
-	if err := binary.Write(&block, binary.BigEndian, uint32(len(albumArtBase64))); err != nil {
-		return nil, err
-	}
-	block.Write([]byte(albumArtBase64))
-	*/
 	return res.Bytes(), nil
 }
