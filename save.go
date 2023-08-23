@@ -62,47 +62,47 @@ func (tag *IDTag) Save() error {
 		mp3Tag.AddFrame("TCOM", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.copyrightMsg,
+			Text:     tag.idTagExtended.copyrightMsg,
 		}
 		mp3Tag.AddFrame("TCOP", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.date,
+			Text:     tag.idTagExtended.date,
 		}
 		mp3Tag.AddFrame("TDRC", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.encodedBy,
+			Text:     tag.idTagExtended.encodedBy,
 		}
 		mp3Tag.AddFrame("TENC", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.lyricist,
+			Text:     tag.idTagExtended.lyricist,
 		}
 		mp3Tag.AddFrame("TEXT", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.fileType,
+			Text:     tag.idTagExtended.fileType,
 		}
 		mp3Tag.AddFrame("TFLT", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.language,
+			Text:     tag.idTagExtended.language,
 		}
 		mp3Tag.AddFrame("TLAN", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.length,
+			Text:     tag.idTagExtended.length,
 		}
 		mp3Tag.AddFrame("TLEN", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.partOfSet,
+			Text:     tag.idTagExtended.partOfSet,
 		}
 		mp3Tag.AddFrame("TPOS", textFrame)
 		textFrame = mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     tag.id3.publisher,
+			Text:     tag.idTagExtended.publisher,
 		}
 		mp3Tag.AddFrame("TPUB", textFrame)
 		if tag.albumArt != nil {
@@ -153,8 +153,8 @@ func (tag *IDTag) Save() error {
 		} else {
 			delete = append(delete, "composer")
 		}
-		if tag.id3.copyrightMsg != "" {
-			mp4tag.Copyright = tag.id3.copyrightMsg
+		if tag.idTagExtended.copyrightMsg != "" {
+			mp4tag.Copyright = tag.idTagExtended.copyrightMsg
 		} else {
 			delete = append(delete, "copyright")
 		}

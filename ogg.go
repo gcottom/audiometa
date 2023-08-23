@@ -177,6 +177,7 @@ type metadataVorbis struct {
 // Read the vorbis comments from an ogg vorbis or ogg opus file
 func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 	var resultTag IDTag
+	resultTag.passThroughMap = make(map[string]string)
 	vendorLen, err := readUint32LittleEndian(r)
 	if err != nil {
 		return nil, err
@@ -202,50 +203,26 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasPrefix(cmt, "album=") {
-			tag := strings.Replace(cmt, "album=", "", 1)
-			resultTag.album = tag
-		} else if strings.HasPrefix(cmt, "ALBUM=") {
-			tag := strings.Replace(cmt, "ALBUM=", "", 1)
-			resultTag.album = tag
-		} else if strings.HasPrefix(cmt, "artist=") {
-			tag := strings.Replace(cmt, "artist=", "", 1)
-			resultTag.artist = tag
-		} else if strings.HasPrefix(cmt, "albumartist=") {
-			tag := strings.Replace(cmt, "albumartist=", "", 1)
-			resultTag.albumArtist = tag
-		} else if strings.HasPrefix(cmt, "ALBUMARTIST=") {
-			tag := strings.Replace(cmt, "ALBUMARTIST=", "", 1)
-			resultTag.albumArtist = tag
-		} else if strings.HasPrefix(cmt, "ARTIST=") {
-			tag := strings.Replace(cmt, "ARTIST=", "", 1)
-			resultTag.artist = tag
-		} else if strings.HasPrefix(cmt, "date=") {
-			tag := strings.Replace(cmt, "date=", "", 1)
-			resultTag.id3.date = tag
-		} else if strings.HasPrefix(cmt, "DATE=") {
-			tag := strings.Replace(cmt, "DATE=", "", 1)
-			resultTag.id3.date = tag
-		} else if strings.HasPrefix(cmt, "title=") {
-			tag := strings.Replace(cmt, "title=", "", 1)
-			resultTag.title = tag
-		} else if strings.HasPrefix(cmt, "TITLE=") {
-			tag := strings.Replace(cmt, "TITLE=", "", 1)
-			resultTag.title = tag
-		} else if strings.HasPrefix(cmt, "genre=") {
-			tag := strings.Replace(cmt, "genre=", "", 1)
-			resultTag.genre = tag
-		} else if strings.HasPrefix(cmt, "GENRE=") {
-			tag := strings.Replace(cmt, "GENRE=", "", 1)
-			resultTag.genre = tag
-		} else if strings.HasPrefix(cmt, "comment=") {
-			tag := strings.Replace(cmt, "comment=", "", 1)
-			resultTag.genre = tag
-		} else if strings.HasPrefix(cmt, "COMMENT=") {
-			tag := strings.Replace(cmt, "COMMENT=", "", 1)
-			resultTag.genre = tag
+		split := strings.Split(cmt, "=")
+		if len(split) == 2 {
+			temp := strings.ToUpper(split[0])
+			if temp != "ALBUM" && temp != "ARTIST" && temp != "ALBUMARTIST" && temp != "DATE" && temp != "TITLE" && temp != "GENRE" && temp != "COMMENT" && temp != "COPYRIGHT" && temp != "PUBLISHER" {
+				resultTag.passThroughMap[temp] = split[1]
+			} else {
+				m.c[temp] = split[1]
+			}
 		}
 	}
+	resultTag.album = m.c["ALBUM"]
+	resultTag.artist = m.c["ARTIST"]
+	resultTag.albumArtist = m.c["ALBUMARTIST"]
+	resultTag.idTagExtended.date = m.c["DATE"]
+	resultTag.title = m.c["TITLE"]
+	resultTag.genre = m.c["GENRE"]
+	resultTag.comments = m.c["COMMENT"]
+	resultTag.idTagExtended.copyrightMsg = m.c["COPYRIGHT"]
+	resultTag.idTagExtended.publisher = m.c["PUBLISHER"]
+
 	if b64data, ok := m.c["metadata_block_picture"]; ok {
 		data, err := base64.StdEncoding.DecodeString(b64data)
 		if err != nil {
@@ -498,11 +475,23 @@ func saveOpusTags(tag *IDTag) error {
 			if tag.title != "" {
 				commentFields = append(commentFields, "TITLE="+tag.title)
 			}
-			if tag.id3.date != "" {
+			if tag.idTagExtended.date != "" {
 				commentFields = append(commentFields, "DATE="+tag.title)
 			}
 			if tag.albumArtist != "" {
 				commentFields = append(commentFields, "ALBUMARTIST="+tag.albumArtist)
+			}
+			if tag.comments != "" {
+				commentFields = append(commentFields, "COMMENT="+tag.comments)
+			}
+			if tag.idTagExtended.publisher != "" {
+				commentFields = append(commentFields, "PUBLISHER="+tag.idTagExtended.publisher)
+			}
+			if tag.idTagExtended.copyrightMsg != "" {
+				commentFields = append(commentFields, "COPYRIGHT="+tag.idTagExtended.copyrightMsg)
+			}
+			for key, value := range tag.passThroughMap {
+				commentFields = append(commentFields, key+"="+value)
 			}
 			img := []byte{}
 			if tag.albumArt != nil {
@@ -710,7 +699,7 @@ func saveVorbisTags(tag *IDTag) error {
 			if tag.title != "" {
 				commentFields = append(commentFields, "TITLE="+tag.title)
 			}
-			if tag.id3.date != "" {
+			if tag.idTagExtended.date != "" {
 				commentFields = append(commentFields, "DATE="+tag.title)
 			}
 			if tag.albumArtist != "" {
@@ -718,6 +707,15 @@ func saveVorbisTags(tag *IDTag) error {
 			}
 			if tag.comments != "" {
 				commentFields = append(commentFields, "COMMENT="+tag.comments)
+			}
+			if tag.idTagExtended.publisher != "" {
+				commentFields = append(commentFields, "PUBLISHER="+tag.idTagExtended.publisher)
+			}
+			if tag.idTagExtended.copyrightMsg != "" {
+				commentFields = append(commentFields, "COPYRIGHT="+tag.idTagExtended.copyrightMsg)
+			}
+			for key, value := range tag.passThroughMap {
+				commentFields = append(commentFields, key+"="+value)
 			}
 			img := []byte{}
 			if tag.albumArt != nil {

@@ -9,21 +9,22 @@ import (
 // Only the valid types are written to the respective data files.
 // Although a tag may be set, if the function to write that tag attribute doesn't exist, the tag attribute will be ignored and the save function will not produce an error.
 type IDTag struct {
-	artist      string
-	albumArtist string
-	album       string
-	albumArt    *image.Image
-	comments    string
-	composer    string
-	genre       string
-	title       string
-	year        string
-	bpm         string
-	id3         ID3Frames
-	fileUrl     string
-	codec       string
+	artist         string            //Artist
+	albumArtist    string            //AlbumArtist
+	album          string            //Album
+	albumArt       *image.Image      //AlbumArt for the work in image format
+	comments       string            //Comments
+	composer       string            //Composer
+	genre          string            //Genre
+	title          string            //Title
+	year           string            //Year
+	bpm            string            //BPM
+	idTagExtended  IDTagExtended     //Extended subset of tags
+	fileUrl        string            //The filepath of the file
+	codec          string            //The codec of the file (ogg use only)
+	passThroughMap map[string]string //A map of unmapped values not yet supported (ogg use only)
 }
-type ID3Frames struct {
+type IDTagExtended struct {
 	copyrightMsg string //Copyright Message
 	date         string //Date
 	encodedBy    string //Endcoded By

@@ -72,7 +72,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert copyright frame")
 			} else {
-				resultTag.id3.copyrightMsg = ex.Text
+				resultTag.idTagExtended.copyrightMsg = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TDRC")
@@ -81,7 +81,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert date frame")
 			} else {
-				resultTag.id3.date = ex.Text
+				resultTag.idTagExtended.date = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TENC")
@@ -90,7 +90,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert encoded by frame")
 			} else {
-				resultTag.id3.encodedBy = ex.Text
+				resultTag.idTagExtended.encodedBy = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TEXT")
@@ -99,7 +99,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert lyricist frame")
 			} else {
-				resultTag.id3.lyricist = ex.Text
+				resultTag.idTagExtended.lyricist = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TFLT")
@@ -108,7 +108,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert file type frame")
 			} else {
-				resultTag.id3.fileType = ex.Text
+				resultTag.idTagExtended.fileType = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TLAN")
@@ -117,7 +117,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert language frame")
 			} else {
-				resultTag.id3.language = ex.Text
+				resultTag.idTagExtended.language = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TLEN")
@@ -126,7 +126,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert length frame")
 			} else {
-				resultTag.id3.length = ex.Text
+				resultTag.idTagExtended.length = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TPOS")
@@ -135,7 +135,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert part of set frame")
 			} else {
-				resultTag.id3.partOfSet = ex.Text
+				resultTag.idTagExtended.partOfSet = ex.Text
 			}
 		}
 		exFramer = tag.GetLastFrame("TPUB")
@@ -144,7 +144,7 @@ func parse(filepath string) (*IDTag, error) {
 			if !ok {
 				log.Fatal("Couldn't assert publisher frame")
 			} else {
-				resultTag.id3.publisher = ex.Text
+				resultTag.idTagExtended.publisher = ex.Text
 			}
 		}
 		pictures := tag.GetFrames(tag.CommonID("Attached picture"))
@@ -178,10 +178,10 @@ func parse(filepath string) (*IDTag, error) {
 					resultTag.artist = tag
 				} else if strings.HasPrefix(cmt, "date=") {
 					tag := strings.Replace(cmt, "date=", "", 1)
-					resultTag.id3.date = tag
+					resultTag.idTagExtended.date = tag
 				} else if strings.HasPrefix(cmt, "DATE=") {
 					tag := strings.Replace(cmt, "DATE=", "", 1)
-					resultTag.id3.date = tag
+					resultTag.idTagExtended.date = tag
 				} else if strings.HasPrefix(cmt, "title=") {
 					tag := strings.Replace(cmt, "title=", "", 1)
 					resultTag.title = tag
@@ -224,7 +224,7 @@ func parse(filepath string) (*IDTag, error) {
 		} else {
 			resultTag.albumArt = nil
 		}
-	} else if *fileType == "ogg"{
+	} else if *fileType == "ogg" {
 		f, err := os.Open(filepath)
 		if err != nil {
 			log.Fatal("Error while opening file: ", err)
@@ -237,7 +237,7 @@ func parse(filepath string) (*IDTag, error) {
 			return nil, err
 		}
 		resultTag = *tag
-		
+
 	} else {
 		f, err := os.Open(filepath)
 		if err != nil {
@@ -251,8 +251,8 @@ func parse(filepath string) (*IDTag, error) {
 			return nil, err
 		}
 		resultTag = IDTag{artist: tag.Artist(), albumArtist: tag.AlbumArtist(), album: tag.Album(), comments: tag.Comment(), composer: tag.Composer(), genre: tag.Genre(), title: tag.Title(), year: strconv.Itoa(tag.Year())}
-		resultTag.id3.encodedBy = tag.Encoder()
-		resultTag.id3.copyrightMsg = tag.Copyright()
+		resultTag.idTagExtended.encodedBy = tag.Encoder()
+		resultTag.idTagExtended.copyrightMsg = tag.Copyright()
 		if tag.Picture() != nil {
 			albumArt := tag.Picture()
 			img, _, err := image.Decode(bytes.NewReader(albumArt))

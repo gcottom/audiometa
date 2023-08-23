@@ -27,8 +27,8 @@ func SaveTag(tag *IDTag) error {
 	}
 }
 
-// clears all tags except the fileUrl tag which is used to reference the file
-func (tag *IDTag) ClearAllTags() {
+// clears all tags except the fileUrl tag which is used to reference the file, takes an optional parameter "preserveUnkown": when this is true passThroughMap is not cleared and unknown tags are preserved
+func (tag *IDTag) ClearAllTags(preserveUnknown ...bool) {
 	tag.artist = ""
 	tag.albumArtist = ""
 	tag.album = ""
@@ -40,15 +40,26 @@ func (tag *IDTag) ClearAllTags() {
 	tag.year = ""
 	tag.bpm = ""
 
-	tag.id3.copyrightMsg = ""
-	tag.id3.date = ""
-	tag.id3.encodedBy = ""
-	tag.id3.lyricist = ""
-	tag.id3.fileType = ""
-	tag.id3.language = ""
-	tag.id3.length = ""
-	tag.id3.partOfSet = ""
-	tag.id3.publisher = ""
+	tag.idTagExtended.copyrightMsg = ""
+	tag.idTagExtended.date = ""
+	tag.idTagExtended.encodedBy = ""
+	tag.idTagExtended.lyricist = ""
+	tag.idTagExtended.fileType = ""
+	tag.idTagExtended.language = ""
+	tag.idTagExtended.length = ""
+	tag.idTagExtended.partOfSet = ""
+	tag.idTagExtended.publisher = ""
+
+	preserve := false
+	if len(preserveUnknown) == 0 {
+		preserve = false
+	} else {
+		preserve = preserveUnknown[0]
+	}
+	if !preserve {
+		tag.passThroughMap = make(map[string]string)
+	}
+
 }
 
 // Get the artist for a tag
@@ -143,92 +154,111 @@ func (tag *IDTag) SetBPM(bpm string) {
 
 // Get the Copyright Messgae for a tag
 func (tag *IDTag) CopyrightMsg() string {
-	return tag.id3.copyrightMsg
+	return tag.idTagExtended.copyrightMsg
 }
 
 // Set the Copyright Message for a tag
 func (tag *IDTag) SetCopyrightMsg(copyrightMsg string) {
-	tag.id3.copyrightMsg = copyrightMsg
+	tag.idTagExtended.copyrightMsg = copyrightMsg
 }
 
 // Get the date for a tag
 func (tag *IDTag) Date() string {
-	return tag.id3.date
+	return tag.idTagExtended.date
 }
 
 // Set the date for a tag
 func (tag *IDTag) SetDate(date string) {
-	tag.id3.date = date
+	tag.idTagExtended.date = date
 }
 
 // Get who encoded the tag
 func (tag *IDTag) EncodedBy() string {
-	return tag.id3.encodedBy
+	return tag.idTagExtended.encodedBy
 }
 
 // Set who encoded the tag
 func (tag *IDTag) SetEncodedBy(encodedBy string) {
-	tag.id3.encodedBy = encodedBy
+	tag.idTagExtended.encodedBy = encodedBy
 }
 
 // Get the lyricist for the tag
 func (tag *IDTag) Lyricist() string {
-	return tag.id3.lyricist
+	return tag.idTagExtended.lyricist
 }
 
 // Set the lyricist for the tag
 func (tag *IDTag) SetLyricist(lyricist string) {
-	tag.id3.lyricist = lyricist
+	tag.idTagExtended.lyricist = lyricist
 }
 
 // Get the filetype of the tag
 func (tag *IDTag) FileType() string {
-	return tag.id3.fileType
+	return tag.idTagExtended.fileType
 }
 
 // Set the filtype of the tag
 func (tag *IDTag) SetFileType(fileType string) {
-	tag.id3.fileType = fileType
+	tag.idTagExtended.fileType = fileType
 }
 
 // Get the language of the tag
 func (tag *IDTag) Language() string {
-	return tag.id3.language
+	return tag.idTagExtended.language
 }
 
 // Set the lanuguage of the tag
 func (tag *IDTag) SetLanguage(language string) {
-	tag.id3.language = language
+	tag.idTagExtended.language = language
 }
 
 // Get the langth of the tag
 func (tag *IDTag) Length() string {
-	return tag.id3.length
+	return tag.idTagExtended.length
 }
 
 // Set the length of the tag
 func (tag *IDTag) SetLength(length string) {
-	tag.id3.length = length
+	tag.idTagExtended.length = length
 }
 
 // Get if tag is part of a set
 func (tag *IDTag) PartOfSet() string {
-	return tag.id3.partOfSet
+	return tag.idTagExtended.partOfSet
 }
 
 // Set if the tag is part of a set
 func (tag *IDTag) SetPartOfSet(partOfSet string) {
-	tag.id3.partOfSet = partOfSet
+	tag.idTagExtended.partOfSet = partOfSet
 }
 
 // Get publisher for the tag
 func (tag *IDTag) Publisher() string {
-	return tag.id3.publisher
+	return tag.idTagExtended.publisher
 }
 
 // Set publihser for the tag
 func (tag *IDTag) SetPublisher(publisher string) {
-	tag.id3.publisher = publisher
+	tag.idTagExtended.publisher = publisher
+}
+
+// Get all additional (unmapped) tags
+func (tag *IDTag) AdditionalTags() map[string]string {
+	return tag.passThroughMap
+}
+
+// Set an additional (unmapped) tag
+func (tag *IDTag) SetAdditionalTag(id string, value string) {
+	tag.passThroughMap[id] = value
+}
+
+// Set a map for all additional tags
+func (tag *IDTag) SetAllAdditionalTags(set map[string]string) {
+	tag.passThroughMap = set
+}
+
+func (tag *IDTag) ClearAllAdditionalTags() {
+	tag.passThroughMap = make(map[string]string)
 }
 
 // Get the album art for the tag as an *image.Image
