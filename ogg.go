@@ -222,6 +222,7 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 	resultTag.comments = m.c["COMMENT"]
 	resultTag.idTagExtended.copyrightMsg = m.c["COPYRIGHT"]
 	resultTag.idTagExtended.publisher = m.c["PUBLISHER"]
+	resultTag.composer = m.c["COMPOSER"]
 
 	if b64data, ok := m.c["metadata_block_picture"]; ok {
 		data, err := base64.StdEncoding.DecodeString(b64data)
@@ -490,6 +491,9 @@ func saveOpusTags(tag *IDTag) error {
 			if tag.idTagExtended.copyrightMsg != "" {
 				commentFields = append(commentFields, "COPYRIGHT="+tag.idTagExtended.copyrightMsg)
 			}
+			if tag.composer != ""{
+				commentFields = append(commentFields, "COMPOSER="+tag.composer)
+			}
 			for key, value := range tag.passThroughMap {
 				commentFields = append(commentFields, key+"="+value)
 			}
@@ -710,6 +714,9 @@ func saveVorbisTags(tag *IDTag) error {
 			}
 			if tag.idTagExtended.publisher != "" {
 				commentFields = append(commentFields, "PUBLISHER="+tag.idTagExtended.publisher)
+			}
+			if tag.composer != ""{
+				commentFields = append(commentFields, "COMPOSER="+tag.composer)
 			}
 			if tag.idTagExtended.copyrightMsg != "" {
 				commentFields = append(commentFields, "COPYRIGHT="+tag.idTagExtended.copyrightMsg)
