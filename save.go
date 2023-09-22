@@ -14,7 +14,7 @@ import (
 
 // This operation saves the corresponding IDTag to the mp3/mp4 file that it references and returns an error if the saving process fails
 func (tag *IDTag) Save() error {
-	fileType, err := getFileType(tag.fileUrl)
+	fileType, err := GetFileType(tag.fileUrl)
 	if err != nil {
 		return err
 	}

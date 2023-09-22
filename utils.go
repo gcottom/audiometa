@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func getFileType(filepath string) (*string, error) {
+func GetFileType(filepath string) (*string, error) {
 	fileTypeArr := strings.Split(filepath, ".")
 	lastIndex := len(fileTypeArr) - 1
 	fileType := fileTypeArr[lastIndex]

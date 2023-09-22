@@ -15,7 +15,7 @@ import (
 
 // This operation opens the ID tag for the corresponding file that is passed in the filepath parameter regardless of the filetype as long as it is a supported file type
 func parse(filepath string) (*IDTag, error) {
-	fileType, err := getFileType(filepath)
+	fileType, err := GetFileType(filepath)
 	if err != nil {
 		return nil, err
 	}
