@@ -1,10 +1,10 @@
-# mp3-mp4-tag
+# audiometa
 
 
-ID3/MP4/VorbisComment tag reader and writer for go
+MP3/MP4/FLAC/OGG tag reader and writer for go
 
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/gcottom/mp3-mp4-tag.svg)](https://pkg.go.dev/github.com/gcottom/mp3-mp4-tag)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gcottom/audiometa.svg)](https://pkg.go.dev/github.com/gcottom/audiometa)
 
 
 This package allows you to parse and write ID tags for mp3, mp4 (m4a, m4b, m4p), FLAC, and ogg (Vorbis, OPUS) files.
