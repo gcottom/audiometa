@@ -1,4 +1,4 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"bytes"
@@ -231,7 +231,7 @@ func parse(filepath string) (*IDTag, error) {
 			return nil, err
 		}
 		defer f.Close()
-		tag, err := ReadOGGTags(f)
+		tag, err := readOggTags(f)
 		if err != nil {
 			log.Fatal("Error reading ogg tag", err)
 			return nil, err
@@ -245,16 +245,18 @@ func parse(filepath string) (*IDTag, error) {
 			return nil, err
 		}
 		defer f.Close()
-		tag, err := ReadFromMP4(f)
+		tag, err := readFromMP4(f)
 		if err != nil {
 			log.Fatal("Error while reading file: ", err)
 			return nil, err
 		}
-		resultTag = IDTag{artist: tag.Artist(), albumArtist: tag.AlbumArtist(), album: tag.Album(), comments: tag.Comment(), composer: tag.Composer(), genre: tag.Genre(), title: tag.Title(), year: strconv.Itoa(tag.Year())}
-		resultTag.idTagExtended.encodedBy = tag.Encoder()
-		resultTag.idTagExtended.copyrightMsg = tag.Copyright()
-		if tag.Picture() != nil {
-			albumArt := tag.Picture()
+		resultTag = IDTag{artist: tag.artist(), albumArtist: tag.albumArtist(), album: tag.album(), comments: tag.comment(), composer: tag.composer(), genre: tag.genre(), title: tag.title(), year: strconv.Itoa(tag.year())}
+		resultTag.idTagExtended.encodedBy = tag.encoder()
+		resultTag.idTagExtended.copyrightMsg = tag.copyright()
+		resultTag.bpm = strconv.Itoa(tag.tempo())
+
+		if tag.picture() != nil {
+			albumArt := tag.picture()
 			img, _, err := image.Decode(bytes.NewReader(albumArt))
 			if err != nil {
 				log.Fatal("Error opening album image")

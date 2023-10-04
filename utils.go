@@ -1,4 +1,4 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//GetFileType returns the file type of the file pointed to by filepath. If the filetype is not supported, an error is returned.
 func GetFileType(filepath string) (*string, error) {
 	fileTypeArr := strings.Split(filepath, ".")
 	lastIndex := len(fileTypeArr) - 1

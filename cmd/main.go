@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	mp3mp4tag "github.com/gcottom/mp3-mp4-tag"
+	"github.com/gcottom/audiometa"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 		mode = strings.ToLower(args[0])
 		if len(args)%2 == 0 && len(args) != 1 {
 			if mode == "p" || mode == "parse" || mode == "r" || mode == "read" || mode == "-p" || mode == "-parse" || mode == "-r" || mode == "-read" {
-				tag, err := mp3mp4tag.OpenTag(file)
+				tag, err := audiometa.OpenTag(file)
 				if err != nil {
 					panic(err)
 				}
@@ -108,7 +108,7 @@ func main() {
 				}
 			} else if mode == "s" || mode == "w" || mode == "save" || mode == "write" || mode == "-s" || mode == "-w" || mode == "-save" || mode == "-write" {
 				if len(args) > 2 {
-					tag, err := mp3mp4tag.OpenTag(file)
+					tag, err := audiometa.OpenTag(file)
 					if err != nil {
 						panic(err)
 					}
@@ -136,7 +136,7 @@ func main() {
 						} else if cmdTag == "b" || cmdTag == "-b" || cmdTag == "bpm" || cmdTag == "-bpm" {
 							tag.SetBPM(writeTag)
 						} else {
-							fileType, err := mp3mp4tag.GetFileType(args[1])
+							fileType, err := audiometa.GetFileType(args[1])
 							if err != nil {
 								fmt.Println(err)
 							}
@@ -155,7 +155,7 @@ func main() {
 				}
 
 			} else if mode == "c" || mode == "clear" || mode == "e" || mode == "empty" || mode == "-c" || mode == "-clear" || mode == "-e" || mode == "-empty" {
-				tag, err := mp3mp4tag.OpenTag(file)
+				tag, err := audiometa.OpenTag(file)
 				if err != nil {
 					panic(err)
 				}

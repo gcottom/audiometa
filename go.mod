@@ -1,4 +1,4 @@
-module github.com/gcottom/mp3-mp4-tag
+module github.com/gcottom/audiometa
 
 go 1.20
 

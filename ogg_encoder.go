@@ -1,4 +1,4 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 )
 
 // Encoder converts raw bytes into an ogg stream.
-type OGGEncoder struct {
+type oggEncoder struct {
 	serial uint32
 	page   uint32
 	dummy  [1][]byte
@@ -18,14 +18,14 @@ type OGGEncoder struct {
 // NewEncoder initializes an ogg encoder with a given serial ID.
 // When using multiple Encoders for multiplexed logical streams, ensure unique IDs.
 // Encode streams as per ogg RFC for Grouping and Chaining.
-func NewOGGEncoder(id uint32, w io.Writer) *OGGEncoder {
-	return &OGGEncoder{serial: id, w: w}
+func newOggEncoder(id uint32, w io.Writer) *oggEncoder {
+	return &oggEncoder{serial: id, w: w}
 }
 
 // EncodeBOS writes a beginning-of-stream packet to the ogg stream with a given granule position.
 // Large packets are split across multiple pages with continuation-of-packet flag set.
 // Packets can be empty or nil, resulting in a single segment of size 0.
-func (w *OGGEncoder) EncodeBOS(granule int64, packets [][]byte) error {
+func (w *oggEncoder) encodeBOS(granule int64, packets [][]byte) error {
 	if len(packets) == 0 {
 		packets = w.dummy[:]
 	}
@@ -35,7 +35,7 @@ func (w *OGGEncoder) EncodeBOS(granule int64, packets [][]byte) error {
 // Encode writes a data packet to the ogg stream with a given granule position.
 // Large packets are split across multiple pages with continuation-of-packet flag set.
 // Packets can be empty or nil, resulting in a single segment of size 0.
-func (w *OGGEncoder) Encode(granule int64, packets [][]byte) error {
+func (w *oggEncoder) encode(granule int64, packets [][]byte) error {
 	if len(packets) == 0 {
 		packets = w.dummy[:]
 	}
@@ -44,14 +44,14 @@ func (w *OGGEncoder) Encode(granule int64, packets [][]byte) error {
 
 // EncodeEOS writes a end-of-stream packet to the ogg stream.
 // Packets can be empty or nil, resulting in a single segment of size 0.
-func (w *OGGEncoder) EncodeEOS(granule int64, packets [][]byte) error {
+func (w *oggEncoder) encodeEOS(granule int64, packets [][]byte) error {
 	if len(packets) == 0 {
 		packets = w.dummy[:]
 	}
 	return w.writePackets(EOS, granule, packets)
 }
 
-func (w *OGGEncoder) writePackets(kind byte, granule int64, packets [][]byte) error {
+func (w *oggEncoder) writePackets(kind byte, granule int64, packets [][]byte) error {
 	h := oggPageHeader{
 		Magic:           [4]byte{'O', 'g', 'g', 'S'},
 		Flags:           kind,
@@ -77,7 +77,7 @@ func (w *OGGEncoder) writePackets(kind byte, granule int64, packets [][]byte) er
 	return nil
 }
 
-func (w *OGGEncoder) writePage(h *oggPageHeader, segtbl []byte, pay payload) error {
+func (w *oggEncoder) writePage(h *oggPageHeader, segtbl []byte, pay payload) error {
 	h.SequenceNumber = w.page
 	w.page++
 	h.Segments = byte(len(segtbl))
@@ -111,7 +111,7 @@ type payload struct {
 
 // segmentize calculates the lacing values for the segment table based on given packets.
 // Returns the segment table, the payload for the current page and any leftover payload.
-func (w *OGGEncoder) segmentize(pay payload) ([]byte, payload, payload) {
+func (w *oggEncoder) segmentize(pay payload) ([]byte, payload, payload) {
 	segtbl := w.buf[headerSize : headerSize+maxSegSize]
 	i := 0
 

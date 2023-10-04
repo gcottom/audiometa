@@ -1,4 +1,4 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"path/filepath"

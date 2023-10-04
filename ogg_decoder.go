@@ -1,4 +1,4 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"strconv"
 )
 
-// OGGDecoder is a structure that facilitates the page-by-page decoding of an ogg stream.
-type OGGDecoder struct {
+// OggDecoder is a structure that facilitates the page-by-page decoding of an ogg stream.
+type oggDecoder struct {
 	// lenbuf acts as a buffer for packet lengths and helps avoid allocating (maxSegSize is the maximum per page)
 	// r is an io.Reader used to read the data
 	// buf is a byte array of maximum page size
@@ -18,14 +18,14 @@ type OGGDecoder struct {
 	buf    [maxPageSize]byte
 }
 
-// NewOGGDecoder is a constructor that initializes an ogg Decoder.
-func NewOGGDecoder(r io.Reader) *OGGDecoder {
+// NewOggDecoder is a constructor that initializes an ogg Decoder.
+func newOggDecoder(r io.Reader) *oggDecoder {
 	// returns a new instance of Decoder
-	return &OGGDecoder{r: r}
+	return &oggDecoder{r: r}
 }
 
 // Page struct represents a logical unit of an ogg page.
-type OGGPage struct {
+type oggPage struct {
 	// Type is a bitmask of COP, BOS, and/or EOS.
 	Type byte
 	// Serial represents the bitstream serial number.
@@ -38,17 +38,17 @@ type OGGPage struct {
 	Packets [][]byte
 }
 
-// ErrBadSegs error is thrown when an attempt is made to decode a page with a segment table size less than 1.
-var ErrBadSegs = errors.New("invalid segment table size")
+// errBadSegs error is thrown when an attempt is made to decode a page with a segment table size less than 1.
+var errBadSegs = errors.New("invalid segment table size")
 
 // ErrBadCrc error occurs when the CRC field in an ogg page doesn't match the CRC calculated by the Decoder.
-type ErrBadCrc struct {
+type errBadCrc struct {
 	Found    uint32
 	Expected uint32
 }
 
 // Error function to return a formatted error message
-func (bc ErrBadCrc) Error() string {
+func (bc errBadCrc) Error() string {
 	// returning a formatted error message with received and expected CRC values
 	return "crc error in packet: invalid " + strconv.FormatInt(int64(bc.Found), 16) +
 		", expected " + strconv.FormatInt(int64(bc.Expected), 16)
@@ -65,13 +65,13 @@ var oggs = []byte{'O', 'g', 'g', 'S'}
 //
 // It's safe to call Decode concurrently on different Decoders, provided their Readers are distinct.
 // Otherwise, the outcome is not defined.
-func (d *OGGDecoder) DecodeOGG() (OGGPage, error) {
+func (d *oggDecoder) decodeOgg() (oggPage, error) {
 	hbuf := d.buf[0:headerSize]
 	b := 0
 	for {
 		_, err := io.ReadFull(d.r, hbuf[b:])
 		if err != nil {
-			return OGGPage{}, err
+			return oggPage{}, err
 		}
 
 		i := bytes.Index(hbuf, oggs)
@@ -99,14 +99,14 @@ func (d *OGGDecoder) DecodeOGG() (OGGPage, error) {
 	_ = binary.Read(bytes.NewBuffer(hbuf), byteOrder, &h)
 
 	if h.Segments < 1 {
-		return OGGPage{}, ErrBadSegs
+		return oggPage{}, errBadSegs
 	}
 
 	nsegs := int(h.Segments)
 	segtbl := d.buf[headerSize : headerSize+nsegs]
 	_, err := io.ReadFull(d.r, segtbl)
 	if err != nil {
-		return OGGPage{}, err
+		return oggPage{}, err
 	}
 
 	// A page may encompass multiple packets. Hence, we extract their lengths from the table at this stage,
@@ -129,7 +129,7 @@ func (d *OGGDecoder) DecodeOGG() (OGGPage, error) {
 	payload := d.buf[headerSize+nsegs : headerSize+nsegs+payloadlen]
 	_, err = io.ReadFull(d.r, payload)
 	if err != nil {
-		return OGGPage{}, err
+		return oggPage{}, err
 	}
 
 	page := d.buf[0 : headerSize+nsegs+payloadlen]
@@ -140,7 +140,7 @@ func (d *OGGDecoder) DecodeOGG() (OGGPage, error) {
 	page[25] = 0
 	crc := crc32(page)
 	if crc != h.CRC {
-		return OGGPage{}, ErrBadCrc{h.CRC, crc}
+		return oggPage{}, errBadCrc{h.CRC, crc}
 	}
 
 	packets := make([][]byte, len(packetlens))
@@ -150,5 +150,5 @@ func (d *OGGDecoder) DecodeOGG() (OGGPage, error) {
 		s += l
 	}
 
-	return OGGPage{h.Flags, h.SerialNumber, h.GranulePosition, packets}, nil
+	return oggPage{h.Flags, h.SerialNumber, h.GranulePosition, packets}, nil
 }

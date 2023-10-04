@@ -1,11 +1,11 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"image"
 )
 
 // The IDTag represents all of the metadata that can be retrieved from a file.
-// The IDTag contains all tags for both mp3 and mp4. Some tags may not be applicable to all types.
+// The IDTag contains all tags for all audio types. Some tags may not be applicable to all types.
 // Only the valid types are written to the respective data files.
 // Although a tag may be set, if the function to write that tag attribute doesn't exist, the tag attribute will be ignored and the save function will not produce an error.
 type IDTag struct {
@@ -24,6 +24,7 @@ type IDTag struct {
 	codec          string            //The codec of the file (ogg use only)
 	passThroughMap map[string]string //A map of unmapped values not yet supported (ogg use only)
 }
+//The IDTagExtended contains an extended set of attributes that an IDTag may contain
 type IDTagExtended struct {
 	copyrightMsg string //Copyright Message
 	date         string //Date
@@ -35,6 +36,8 @@ type IDTagExtended struct {
 	partOfSet    string //Part of a set
 	publisher    string //Publisher
 }
+
+//The Picture type contains a byte representation of an image
 type Picture struct {
 	Ext         string // Extension of the picture file.
 	MIMEType    string // MIMEType of the picture.

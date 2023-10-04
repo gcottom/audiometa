@@ -1,4 +1,4 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/go-flac/go-flac"
 )
 
-// This operation saves the corresponding IDTag to the mp3/mp4 file that it references and returns an error if the saving process fails
+//Save saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
 func (tag *IDTag) Save() error {
 	fileType, err := GetFileType(tag.fileUrl)
 	if err != nil {
@@ -196,8 +196,8 @@ func (tag *IDTag) Save() error {
 			log.Println(err)
 			return err
 		}
-		cmts, idx := extractFLACComment(tag.fileUrl)
-		cmts = flacvorbis.New()
+		_, idx := extractFLACComment(tag.fileUrl)
+		cmts := flacvorbis.New()
 		err = cmts.Add(flacvorbis.FIELD_TITLE, tag.title)
 		if err != nil {
 			log.Println(err)

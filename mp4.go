@@ -1,4 +1,4 @@
-package mp3mp4tag
+package audiometa
 
 import (
 	"bytes"
@@ -46,7 +46,7 @@ var pngHeader = []byte{137, 80, 78, 71, 13, 10, 26, 10}
 
 type atomNames map[string]string
 
-func (f atomNames) Name(n string) []string {
+func (f atomNames) name(n string) []string {
 	res := make([]string, 1)
 	for k, v := range f {
 		if v == n {
@@ -61,13 +61,13 @@ type metadataMP4 struct {
 	data map[string]interface{}
 }
 
-func ReadFromMP4(r io.ReadSeeker) (metadataMP4, error) {
-	return ReadAtoms(r)
+func readFromMP4(r io.ReadSeeker) (metadataMP4, error) {
+	return readAtoms(r)
 }
 
 // ReadAtoms reads MP4 metadata atoms from the io.ReadSeeker into a Metadata, returning
 // non-nil error if there was a problem.
-func ReadAtoms(r io.ReadSeeker) (metadataMP4, error) {
+func readAtoms(r io.ReadSeeker) (metadataMP4, error) {
 	m := metadataMP4{
 		data: make(map[string]interface{}),
 	}
@@ -272,8 +272,6 @@ func readCustomAtom(r io.ReadSeeker, size uint32) (_ string, data []string, _ er
 	return subNames["name"], data, nil
 }
 
-func (m metadataMP4) Raw() map[string]interface{} { return m.data }
-
 func (m metadataMP4) getString(n []string) string {
 	for _, k := range n {
 		if x, ok := m.data[k]; ok {
@@ -292,32 +290,32 @@ func (m metadataMP4) getInt(n []string) int {
 	return 0
 }
 
-func (m metadataMP4) Title() string {
-	return m.getString(atoms.Name("title"))
+func (m metadataMP4) title() string {
+	return m.getString(atoms.name("title"))
 }
 
-func (m metadataMP4) Artist() string {
-	return m.getString(atoms.Name("artist"))
+func (m metadataMP4) artist() string {
+	return m.getString(atoms.name("artist"))
 }
 
-func (m metadataMP4) Album() string {
-	return m.getString(atoms.Name("album"))
+func (m metadataMP4) album() string {
+	return m.getString(atoms.name("album"))
 }
 
-func (m metadataMP4) AlbumArtist() string {
-	return m.getString(atoms.Name("album_artist"))
+func (m metadataMP4) albumArtist() string {
+	return m.getString(atoms.name("album_artist"))
 }
 
-func (m metadataMP4) Composer() string {
-	return m.getString(atoms.Name("composer"))
+func (m metadataMP4) composer() string {
+	return m.getString(atoms.name("composer"))
 }
 
-func (m metadataMP4) Genre() string {
-	return m.getString(atoms.Name("genre"))
+func (m metadataMP4) genre() string {
+	return m.getString(atoms.name("genre"))
 }
 
-func (m metadataMP4) Year() int {
-	date := m.getString(atoms.Name("year"))
+func (m metadataMP4) year() int {
+	date := m.getString(atoms.name("year"))
 	if len(date) >= 4 {
 		year, _ := strconv.Atoi(date[:4])
 		return year
@@ -325,15 +323,7 @@ func (m metadataMP4) Year() int {
 	return 0
 }
 
-func (m metadataMP4) Lyrics() string {
-	t, ok := m.data["\xa9lyr"]
-	if !ok {
-		return ""
-	}
-	return t.(string)
-}
-
-func (m metadataMP4) Comment() string {
+func (m metadataMP4) comment() string {
 	t, ok := m.data["\xa9cmt"]
 	if !ok {
 		return ""
@@ -341,7 +331,7 @@ func (m metadataMP4) Comment() string {
 	return t.(string)
 }
 
-func (m metadataMP4) Picture() []byte {
+func (m metadataMP4) picture() []byte {
 	v, ok := m.data["covr"]
 	if !ok {
 		return nil
@@ -356,13 +346,13 @@ func (m metadataMP4) Picture() []byte {
 
 }
 
-func (m metadataMP4) Tempo() int {
-	return m.getInt(atoms.Name("tempo"))
+func (m metadataMP4) tempo() int {
+	return m.getInt(atoms.name("tempo"))
 }
 
-func (m metadataMP4) Encoder() string {
-	return m.getString(atoms.Name("encoder"))
+func (m metadataMP4) encoder() string {
+	return m.getString(atoms.name("encoder"))
 }
-func (m metadataMP4) Copyright() string {
-	return m.getString(atoms.Name("copyright"))
+func (m metadataMP4) copyright() string {
+	return m.getString(atoms.name("copyright"))
 }
