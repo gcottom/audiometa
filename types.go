@@ -9,35 +9,31 @@ import (
 // Only the valid types are written to the respective data files.
 // Although a tag may be set, if the function to write that tag attribute doesn't exist, the tag attribute will be ignored and the save function will not produce an error.
 type IDTag struct {
-	artist         string            //Artist
-	albumArtist    string            //AlbumArtist
-	album          string            //Album
-	albumArt       *image.Image      //AlbumArt for the work in image format
-	comments       string            //Comments
-	composer       string            //Composer
-	genre          string            //Genre
-	title          string            //Title
-	year           string            //Year
-	bpm            string            //BPM
-	idTagExtended  IDTagExtended     //Extended subset of tags
-	fileUrl        string            //The filepath of the file
-	codec          string            //The codec of the file (ogg use only)
-	passThroughMap map[string]string //A map of unmapped values not yet supported (ogg use only)
-}
-//The IDTagExtended contains an extended set of attributes that an IDTag may contain
-type IDTagExtended struct {
-	copyrightMsg string //Copyright Message
-	date         string //Date
-	encodedBy    string //Endcoded By
-	lyricist     string //Lyricist
-	fileType     string //File Type
-	language     string //Language
-	length       string //Length
-	partOfSet    string //Part of a set
-	publisher    string //Publisher
+	Artist       string
+	AlbumArtist  string
+	Album        string
+	AlbumArt     *image.Image
+	Comments     string
+	Composer     string
+	Genre        string
+	Title        string
+	Year         string
+	BPM          string
+	FilePath     string
+	Codec        string
+	CopyrightMsg string
+	Date         string
+	EncodedBy    string
+	Lyricist     string
+	FileType     string
+	Language     string
+	Length       string
+	PartOfSet    string
+	Publisher    string
+	PassThrough  map[string]string
 }
 
-//The Picture type contains a byte representation of an image
+// The Picture type contains a byte representation of an image
 type Picture struct {
 	Ext         string // Extension of the picture file.
 	MIMEType    string // MIMEType of the picture.
@@ -45,6 +41,26 @@ type Picture struct {
 	Description string // Description.
 	Data        []byte // Raw picture data.
 }
+
+const (
+	MP3  string = "mp3"
+	M4P  string = "m4p"
+	M4A  string = "m4a"
+	M4B  string = "m4b"
+	MP4  string = "mp4"
+	FLAC string = "flac"
+	OGG  string = "ogg"
+)
+
+const (
+	ALBUM  string = "album"
+	ARTIST string = "artist"
+	DATE   string = "date"
+	TITLE  string = "title"
+	GENRE  string = "genre"
+)
+
+var supportedFileTypes = []string{MP3, M4P, M4A, M4B, MP4, FLAC, OGG}
 
 var vorbisPictureTypes = map[byte]string{
 	0x00: "Other",

@@ -11,7 +11,7 @@ func TestReadMP3Tags(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.artist == "" || tag.album == "" || tag.title == "" {
+	if tag.Artist == "" || tag.Album == "" || tag.Title == "" {
 		t.Fatal("Data parsed was blank!")
 	}
 
@@ -22,7 +22,7 @@ func TestReadM4ATags(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.artist == "" || tag.album == "" || tag.title == "" {
+	if tag.Artist == "" || tag.Album == "" || tag.Title == "" {
 		t.Fatal("Data parsed was blank!")
 	}
 }
@@ -32,7 +32,7 @@ func TestReadFlacTags(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.artist == "" || tag.album == "" || tag.title == "" {
+	if tag.Artist == "" || tag.Album == "" || tag.Title == "" {
 		t.Fatal("Data parsed was blank!")
 	}
 }
@@ -42,7 +42,7 @@ func TestReadOggVorbisTags(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.artist == "" || tag.album == "" || tag.title == "" {
+	if tag.Artist == "" || tag.Album == "" || tag.Title == "" {
 		t.Fatal("Data parsed was blank!")
 	}
 }
@@ -52,7 +52,7 @@ func TestReadOggOpusTags(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.artist == "" || tag.album == "" || tag.title == "" {
+	if tag.Artist == "" || tag.Album == "" || tag.Title == "" {
 		t.Fatal("Data parsed was blank!")
 	}
 }
