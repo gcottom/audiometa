@@ -38,98 +38,98 @@ func parseMP3(filepath string) (*IDTag, error) {
 		return nil, fmt.Errorf("error opening mp3 [%w]", err)
 	}
 	defer tag.Close()
-	resultTag = IDTag{Artist: tag.Artist(), Album: tag.Album(), Genre: tag.Genre(), Title: tag.Title(), Year: tag.Year()}
+	resultTag = IDTag{artist: tag.Artist(), album: tag.Album(), genre: tag.Genre(), title: tag.Title(), year: tag.Year()}
 	if bpmFramer := tag.GetLastFrame(tag.CommonID("BPM")); bpmFramer != nil {
 		if bpm, ok := bpmFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.BPM = bpm.Text
+			resultTag.bpm = bpm.Text
 		}
 	}
 	if commentFramer := tag.GetLastFrame("COMM"); commentFramer != nil {
 		if comment, ok := commentFramer.(mp3TagLib.CommentFrame); ok {
-			resultTag.Comments = comment.Text
+			resultTag.comments = comment.Text
 		}
 	}
 	if composerFramer := tag.GetLastFrame("TCOM"); composerFramer != nil {
 		if composer, ok := composerFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.Composer = composer.Text
+			resultTag.composer = composer.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TPE2"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.AlbumArtist = ex.Text
+			resultTag.albumArtist = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TCOP"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.CopyrightMsg = ex.Text
+			resultTag.copyrightMsg = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TDRC"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.Date = ex.Text
+			resultTag.date = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TENC"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.EncodedBy = ex.Text
+			resultTag.encodedBy = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TEXT"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.Lyricist = ex.Text
+			resultTag.lyricist = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TFLT"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.FileType = ex.Text
+			resultTag.fileType = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TLAN"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.Language = ex.Text
+			resultTag.language = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TLEN"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.Length = ex.Text
+			resultTag.length = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TPOS"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.PartOfSet = ex.Text
+			resultTag.partOfSet = ex.Text
 		}
 	}
 	if exFramer := tag.GetLastFrame("TPUB"); exFramer != nil {
 		if ex, ok := exFramer.(mp3TagLib.TextFrame); ok {
-			resultTag.Publisher = ex.Text
+			resultTag.publisher = ex.Text
 		}
 	}
 	if pictures := tag.GetFrames(tag.CommonID("Attached picture")); len(pictures) > 0 {
 		pic := pictures[0].(mp3TagLib.PictureFrame)
 		if img, _, err := image.Decode(bytes.NewReader(pic.Picture)); err == nil {
-			resultTag.AlbumArt = &img
+			resultTag.albumArt = &img
 		}
 	}
-	resultTag.FilePath = filepath
+	resultTag.filePath = filepath
 	return &resultTag, nil
 }
 
 func parseFLAC(filepath string) (*IDTag, error) {
-	resultTag := IDTag{FilePath: filepath}
+	resultTag := IDTag{filePath: filepath}
 	if cmts, _, err := extractFLACComment(filepath); cmts != nil && err == nil {
 		for _, cmt := range cmts.Comments {
 			if sp := strings.Split(cmt, "="); len(sp) == 2 {
 				flactag := strings.ToLower(sp[0])
 				if flactag == ALBUM {
-					resultTag.Album = sp[1]
+					resultTag.album = sp[1]
 				} else if flactag == ARTIST {
-					resultTag.Artist = sp[1]
+					resultTag.artist = sp[1]
 				} else if flactag == DATE {
-					resultTag.Date = sp[1]
+					resultTag.date = sp[1]
 				} else if flactag == TITLE {
-					resultTag.Title = sp[1]
+					resultTag.title = sp[1]
 				} else if flactag == GENRE {
-					resultTag.Genre = sp[1]
+					resultTag.genre = sp[1]
 				}
 			}
 		}
@@ -154,7 +154,7 @@ func parseFLAC(filepath string) (*IDTag, error) {
 	}
 	if pic != nil {
 		if img, _, err := image.Decode(bytes.NewReader(pic.ImageData)); err == nil {
-			resultTag.AlbumArt = &img
+			resultTag.albumArt = &img
 		}
 	}
 	return &resultTag, nil
@@ -170,7 +170,7 @@ func parseOGG(filepath string) (*IDTag, error) {
 	if err != nil {
 		return nil, err
 	}
-	tag.FilePath = filepath
+	tag.filePath = filepath
 	return tag, nil
 }
 
@@ -185,13 +185,13 @@ func parseMP4(filepath string) (*IDTag, error) {
 	if err != nil {
 		return nil, err
 	}
-	resultTag = IDTag{Artist: tag.artist(), AlbumArtist: tag.albumArtist(), Album: tag.album(),
-		Comments: tag.comment(), Composer: tag.composer(), Genre: tag.genre(),
-		Title: tag.title(), Year: strconv.Itoa(tag.year()), EncodedBy: tag.encoder(),
-		CopyrightMsg: tag.copyright(), BPM: strconv.Itoa(tag.tempo()), FilePath: filepath}
+	resultTag = IDTag{artist: tag.artist(), albumArtist: tag.albumArtist(), album: tag.album(),
+		comments: tag.comment(), composer: tag.composer(), genre: tag.genre(),
+		title: tag.title(), year: strconv.Itoa(tag.year()), encodedBy: tag.encoder(),
+		copyrightMsg: tag.copyright(), bpm: strconv.Itoa(tag.tempo()), filePath: filepath}
 	if tag.picture() != nil {
 		if img, _, err := image.Decode(bytes.NewReader(tag.picture())); err == nil {
-			resultTag.AlbumArt = &img
+			resultTag.albumArt = &img
 		}
 	}
 	return &resultTag, nil

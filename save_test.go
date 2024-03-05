@@ -20,7 +20,7 @@ func TestWriteEmptyTagsMP3(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "" || tag.Album != "" || tag.Title != "" {
+	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
 		t.Fatal("Failed to remove tags for empty tag test!")
 	}
 }
@@ -39,17 +39,18 @@ func TestWriteTagsMP3FromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
-	if err = SaveTag(tag); err != nil {
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
+	err = SaveTag(tag)
+	if err != nil {
 		t.Fatal("Error saving!")
 	}
 	tag, err = parse(path)
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist1" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -70,21 +71,23 @@ func TestUpdateTagsMP3(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
-	if err = SaveTag(tag); err != nil {
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
+	err = SaveTag(tag)
+	if err != nil {
 		t.Fatal("Error saving!")
 	}
-	tag.Artist = "TestArtist2"
-	if err = SaveTag(tag); err != nil {
+	tag.SetArtist("TestArtist2")
+	err = SaveTag(tag)
+	if err != nil {
 		t.Fatal("Error saving!")
 	}
 	tag, err = parse(path)
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist2" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -104,7 +107,7 @@ func TestWriteEmptyTagsM4A(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "" || tag.Album != "" || tag.Title != "" {
+	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
 		t.Fatal("Failed to remove tags for empty tag test!")
 	}
 }
@@ -123,9 +126,9 @@ func TestWriteTagsM4AFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
@@ -134,7 +137,7 @@ func TestWriteTagsM4AFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist1" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -154,14 +157,14 @@ func TestUpdateTagsM4A(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
 	}
-	tag.Artist = "TestArtist2"
+	tag.SetArtist("TestArtist2")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
@@ -170,7 +173,7 @@ func TestUpdateTagsM4A(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist2" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -190,7 +193,7 @@ func TestWriteEmptyTagsFlac(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "" || tag.Album != "" || tag.Title != "" {
+	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
 		t.Fatal("Failed to remove tags for empty tag test!")
 	}
 }
@@ -209,9 +212,9 @@ func TestWriteTagsFlacFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
@@ -220,7 +223,7 @@ func TestWriteTagsFlacFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist1" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -240,14 +243,14 @@ func TestUpdateTagsFlac(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
 	}
-	tag.Artist = "TestArtist2"
+	tag.SetArtist("TestArtist2")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
@@ -256,7 +259,7 @@ func TestUpdateTagsFlac(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist2" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -276,7 +279,7 @@ func TestWriteEmptyTagsOggVorbis(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "" || tag.Album != "" || tag.Title != "" {
+	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
 		t.Fatal("Failed to remove tags for empty tag test!")
 	}
 }
@@ -295,9 +298,9 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	err = SaveTag(tag)
 	if err != nil {
@@ -307,7 +310,7 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist1" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -326,9 +329,9 @@ func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
@@ -340,7 +343,7 @@ func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist1" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 	if tag.PassThrough["TEST"] != "TEST" || tag.PassThrough["TEST2"] != "TEST2" {
@@ -363,14 +366,14 @@ func TestUpdateTagsOggVorbis(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
 	}
-	tag.Artist = "TestArtist2"
+	tag.SetArtist("TestArtist2")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
@@ -379,7 +382,7 @@ func TestUpdateTagsOggVorbis(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist2" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -399,16 +402,16 @@ func TestUpdateTagsOggVorbisExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
 	}
-	tag.Artist = "TestArtist2"
+	tag.SetArtist("TestArtist2")
 	tag.SetAdditionalTag("TEST", "TEST3")
 	err = SaveTag(tag)
 	if err != nil {
@@ -418,7 +421,7 @@ func TestUpdateTagsOggVorbisExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist2" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 	if tag.PassThrough["TEST"] != "TEST3" || tag.PassThrough["TEST2"] != "TEST2" {
@@ -441,7 +444,7 @@ func TestWriteEmptyTagsOggOpus(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "" || tag.Album != "" || tag.Title != "" {
+	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
 		t.Fatal("Failed to remove tags for empty tag test!")
 	}
 }
@@ -460,9 +463,9 @@ func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	err = SaveTag(tag)
 	if err != nil {
@@ -472,7 +475,7 @@ func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist1" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -491,9 +494,9 @@ func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
@@ -505,7 +508,7 @@ func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist1" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 	if tag.PassThrough["TEST"] != "TEST" || tag.PassThrough["TEST2"] != "TEST2" {
@@ -528,14 +531,14 @@ func TestUpdateTagsOggOpus(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
 	}
-	tag.Artist = "TestArtist2"
+	tag.SetArtist("TestArtist2")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
@@ -544,7 +547,7 @@ func TestUpdateTagsOggOpus(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist2" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 }
@@ -564,16 +567,16 @@ func TestUpdateTagsOggOpusExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	tag.Artist = "TestArtist1"
-	tag.Title = "TestTitle1"
-	tag.Album = "TestAlbum1"
+	tag.SetArtist("TestArtist1")
+	tag.SetTitle("TestTitle1")
+	tag.SetAlbum("TestAlbum1")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
 	err = SaveTag(tag)
 	if err != nil {
 		t.Fatal("Error saving!")
 	}
-	tag.Artist = "TestArtist2"
+	tag.SetArtist("TestArtist2")
 	tag.SetAdditionalTag("TEST", "TEST3")
 	err = SaveTag(tag)
 	if err != nil {
@@ -583,7 +586,7 @@ func TestUpdateTagsOggOpusExtended(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
-	if tag.Artist != "TestArtist2" || tag.Album != "TestAlbum1" || tag.Title != "TestTitle1" {
+	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
 		t.Fatal("Failed to validate new tags")
 	}
 	if tag.PassThrough["TEST"] != "TEST3" || tag.PassThrough["TEST2"] != "TEST2" {

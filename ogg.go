@@ -9,9 +9,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
-	"log"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -145,14 +143,14 @@ func readOggTags(r io.Reader) (*IDTag, error) {
 					newMetadataVorbis(),
 				}
 				resultTag, err := m.readVorbisComment(bytes.NewReader(b[len(vorbisCommentPrefix):]))
-				resultTag.Codec = "vorbis"
+				resultTag.codec = "vorbis"
 				return resultTag, err
 			case bytes.HasPrefix(b, opusTagsPrefix):
 				m := &metadataOgg{
 					newMetadataVorbis(),
 				}
 				resultTag, err := m.readVorbisComment(bytes.NewReader(b[len(opusTagsPrefix):]))
-				resultTag.Codec = "opus"
+				resultTag.codec = "opus"
 				return resultTag, err
 			}
 		}
@@ -212,16 +210,16 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 			}
 		}
 	}
-	resultTag.Album = m.c["ALBUM"]
-	resultTag.Artist = m.c["ARTIST"]
-	resultTag.AlbumArtist = m.c["ALBUMARTIST"]
-	resultTag.Date = m.c["DATE"]
-	resultTag.Title = m.c["TITLE"]
-	resultTag.Genre = m.c["GENRE"]
-	resultTag.Comments = m.c["COMMENT"]
-	resultTag.CopyrightMsg = m.c["COPYRIGHT"]
-	resultTag.Publisher = m.c["PUBLISHER"]
-	resultTag.Composer = m.c["COMPOSER"]
+	resultTag.album = m.c["ALBUM"]
+	resultTag.artist = m.c["ARTIST"]
+	resultTag.albumArtist = m.c["ALBUMARTIST"]
+	resultTag.date = m.c["DATE"]
+	resultTag.title = m.c["TITLE"]
+	resultTag.genre = m.c["GENRE"]
+	resultTag.comments = m.c["COMMENT"]
+	resultTag.copyrightMsg = m.c["COPYRIGHT"]
+	resultTag.publisher = m.c["PUBLISHER"]
+	resultTag.composer = m.c["COMPOSER"]
 
 	if b64data, ok := m.c["metadata_block_picture"]; ok {
 		data, err := base64.StdEncoding.DecodeString(b64data)
@@ -232,11 +230,9 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 	}
 	albumArt := m.p
 	if albumArt != nil {
-		img, _, err := image.Decode(bytes.NewReader(albumArt.Data))
-		if err != nil {
-			log.Fatal("Error opening album image")
+		if img, _, err := image.Decode(bytes.NewReader(albumArt.Data)); err == nil {
+			resultTag.albumArt = &img
 		}
-		resultTag.AlbumArt = &img
 	}
 	return &resultTag, nil
 }
@@ -302,8 +298,7 @@ func (m *metadataVorbis) readPictureBlock(r io.Reader) error {
 		return err
 	}
 	data := make([]byte, dataLen)
-	_, err = io.ReadFull(r, data)
-	if err != nil {
+	if _, err = io.ReadFull(r, data); err != nil {
 		return err
 	}
 
@@ -325,23 +320,13 @@ func clearTagsOpus(path string) error {
 	}
 	defer inputFile.Close()
 	decoder := newOggDecoder(inputFile)
-	tempOut, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	tempOut += "/output_file.ogg"
-	outputFile, err := os.Create(tempOut)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return err
 	}
-	encoder := newOggEncoder(page.Serial, outputFile)
-	err = encoder.encodeBOS(page.Granule, page.Packets)
-	if err != nil {
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
+	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
 		return err
 	}
 	var vorbisCommentPage *oggPage
@@ -361,8 +346,7 @@ func clearTagsOpus(path string) error {
 			commentPacket := createOpusCommentPacket(emptyComments, emptyImage)
 
 			vorbisCommentPage.Packets[0] = commentPacket
-			err = encoder.encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets)
-			if err != nil {
+			if err = encoder.encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets); err != nil {
 				return err
 			}
 			if len(page.Packets) == 1 {
@@ -375,14 +359,12 @@ func clearTagsOpus(path string) error {
 				}
 				if page.Type == COP {
 					if len(page.Packets) > 1 {
-						err = encoder.encode(page.Granule, page.Packets[1:])
-						if err != nil {
+						if err = encoder.encode(page.Granule, page.Packets[1:]); err != nil {
 							return err
 						}
 					}
 				} else {
-					err = encoder.encode(page.Granule, page.Packets)
-					if err != nil {
+					if err = encoder.encode(page.Granule, page.Packets); err != nil {
 						return err
 					}
 				}
@@ -390,62 +372,49 @@ func clearTagsOpus(path string) error {
 		} else {
 			// Write non-Vorbis comment pages to the output file
 			if page.Type == EOS {
-				err = encoder.encodeEOS(page.Granule, page.Packets)
-				if err != nil {
+				if err = encoder.encodeEOS(page.Granule, page.Packets); err != nil {
 					return err
 				}
 			} else {
-				err = encoder.encode(page.Granule, page.Packets)
-				if err != nil {
+				if err = encoder.encode(page.Granule, page.Packets); err != nil {
 					return err
 				}
 			}
 		}
 	}
 	inputFile.Close()
-	outputFile.Close()
-	abs, err := filepath.Abs(path)
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
-	os.Rename(tempOut, abs)
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Saves the tags for an ogg Opus file
 func saveOpusTags(tag *IDTag) error {
 	// Step 1: Clear existing tags from the file
-	err := clearTagsOpus(tag.FilePath)
-	if err != nil {
+	if err := clearTagsOpus(tag.filePath); err != nil {
 		return err
 	}
 
 	// Step 2: Open the input file and create an Ogg decoder
-	inputFile, err := os.Open(tag.FilePath)
+	inputFile, err := os.Open(tag.filePath)
 	if err != nil {
 		return err
 	}
 	defer inputFile.Close()
 	decoder := newOggDecoder(inputFile)
-
-	// Step 3: Create a temporary output file
-	tempOut, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	tempOut += "/output_file.ogg"
-	outputFile, err := os.Create(tempOut)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return err
 	}
-	encoder := newOggEncoder(page.Serial, outputFile)
-	err = encoder.encodeBOS(page.Granule, page.Packets)
-	if err != nil {
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
+	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
 		return err
 	}
 	var vorbisCommentPage *oggPage
@@ -463,44 +432,44 @@ func saveOpusTags(tag *IDTag) error {
 			vorbisCommentPage = &page
 			// Step 5: Prepare the new Vorbis comment packet with updated metadata and album art
 			commentFields := []string{}
-			if tag.Album != "" {
-				commentFields = append(commentFields, "ALBUM="+tag.Album)
+			if tag.album != "" {
+				commentFields = append(commentFields, "ALBUM="+tag.album)
 			}
-			if tag.Artist != "" {
-				commentFields = append(commentFields, "ARTIST="+tag.Artist)
+			if tag.artist != "" {
+				commentFields = append(commentFields, "ARTIST="+tag.artist)
 			}
-			if tag.Genre != "" {
-				commentFields = append(commentFields, "GENRE="+tag.Genre)
+			if tag.genre != "" {
+				commentFields = append(commentFields, "GENRE="+tag.genre)
 			}
-			if tag.Title != "" {
-				commentFields = append(commentFields, "TITLE="+tag.Title)
+			if tag.title != "" {
+				commentFields = append(commentFields, "TITLE="+tag.title)
 			}
-			if tag.Date != "" {
-				commentFields = append(commentFields, "DATE="+tag.Title)
+			if tag.date != "" {
+				commentFields = append(commentFields, "DATE="+tag.title)
 			}
-			if tag.AlbumArtist != "" {
-				commentFields = append(commentFields, "ALBUMARTIST="+tag.AlbumArtist)
+			if tag.albumArtist != "" {
+				commentFields = append(commentFields, "ALBUMARTIST="+tag.albumArtist)
 			}
-			if tag.Comments != "" {
-				commentFields = append(commentFields, "COMMENT="+tag.Comments)
+			if tag.comments != "" {
+				commentFields = append(commentFields, "COMMENT="+tag.comments)
 			}
-			if tag.Publisher != "" {
-				commentFields = append(commentFields, "PUBLISHER="+tag.Publisher)
+			if tag.publisher != "" {
+				commentFields = append(commentFields, "PUBLISHER="+tag.publisher)
 			}
-			if tag.CopyrightMsg != "" {
-				commentFields = append(commentFields, "COPYRIGHT="+tag.CopyrightMsg)
+			if tag.copyrightMsg != "" {
+				commentFields = append(commentFields, "COPYRIGHT="+tag.copyrightMsg)
 			}
-			if tag.Composer != "" {
-				commentFields = append(commentFields, "COMPOSER="+tag.Composer)
+			if tag.composer != "" {
+				commentFields = append(commentFields, "COMPOSER="+tag.composer)
 			}
 			for key, value := range tag.PassThrough {
 				commentFields = append(commentFields, key+"="+value)
 			}
 			img := []byte{}
-			if tag.AlbumArt != nil {
+			if tag.albumArt != nil {
 				// Convert album art image to JPEG format
 				buf := new(bytes.Buffer)
-				if err := jpeg.Encode(buf, *tag.AlbumArt, nil); err == nil {
+				if err := jpeg.Encode(buf, *tag.albumArt, nil); err == nil {
 					img, _ = createMetadataBlockPicture(buf.Bytes())
 				}
 
@@ -531,8 +500,12 @@ func saveOpusTags(tag *IDTag) error {
 	}
 	// Step 7: Close and rename the files to the original file
 	inputFile.Close()
-	outputFile.Close()
-	if err = os.Rename(tempOut, tag.FilePath); err != nil {
+	file, err := os.OpenFile(tag.filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
 		return err
 	}
 	return nil
@@ -546,21 +519,12 @@ func clearTagsVorbis(path string) error {
 	}
 	defer inputFile.Close()
 	decoder := newOggDecoder(inputFile)
-	tempOut, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	tempOut += "/output_file.ogg"
-	outputFile, err := os.Create(tempOut)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return err
 	}
-	encoder := newOggEncoder(page.Serial, outputFile)
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
 	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
 		return err
 	}
@@ -618,46 +582,37 @@ func clearTagsVorbis(path string) error {
 		}
 	}
 	inputFile.Close()
-	outputFile.Close()
-	abs, err := filepath.Abs(path)
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
-	os.Rename(tempOut, abs)
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Saves the given tag structure to a ogg vorbis audio file
 func saveVorbisTags(tag *IDTag) error {
 	// Step 1: Clear existing tags from the file
-	if err := clearTagsVorbis(tag.FilePath); err != nil {
+	if err := clearTagsVorbis(tag.filePath); err != nil {
 		return err
 	}
 
 	// Step 2: Open the input file and create an Ogg decoder
-	inputFile, err := os.Open(tag.FilePath)
+	inputFile, err := os.Open(tag.filePath)
 	if err != nil {
 		return err
 	}
 	defer inputFile.Close()
 	decoder := newOggDecoder(inputFile)
-
-	// Step 3: Create a temporary output file
-	tempOut, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	tempOut += "/output_file.ogg"
-	outputFile, err := os.Create(tempOut)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return err
 	}
-	encoder := newOggEncoder(page.Serial, outputFile)
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
 	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
 		return err
 	}
@@ -676,44 +631,44 @@ func saveVorbisTags(tag *IDTag) error {
 			vorbisCommentPage = &page
 			// Step 5: Prepare the new Vorbis comment packet with updated metadata and album art
 			commentFields := []string{}
-			if tag.Album != "" {
-				commentFields = append(commentFields, "ALBUM="+tag.Album)
+			if tag.album != "" {
+				commentFields = append(commentFields, "ALBUM="+tag.album)
 			}
-			if tag.Artist != "" {
-				commentFields = append(commentFields, "ARTIST="+tag.Artist)
+			if tag.artist != "" {
+				commentFields = append(commentFields, "ARTIST="+tag.artist)
 			}
-			if tag.Genre != "" {
-				commentFields = append(commentFields, "GENRE="+tag.Genre)
+			if tag.genre != "" {
+				commentFields = append(commentFields, "GENRE="+tag.genre)
 			}
-			if tag.Title != "" {
-				commentFields = append(commentFields, "TITLE="+tag.Title)
+			if tag.title != "" {
+				commentFields = append(commentFields, "TITLE="+tag.title)
 			}
-			if tag.Date != "" {
-				commentFields = append(commentFields, "DATE="+tag.Date)
+			if tag.date != "" {
+				commentFields = append(commentFields, "DATE="+tag.date)
 			}
-			if tag.AlbumArtist != "" {
-				commentFields = append(commentFields, "ALBUMARTIST="+tag.AlbumArtist)
+			if tag.albumArtist != "" {
+				commentFields = append(commentFields, "ALBUMARTIST="+tag.albumArtist)
 			}
-			if tag.Comments != "" {
-				commentFields = append(commentFields, "COMMENT="+tag.Comments)
+			if tag.comments != "" {
+				commentFields = append(commentFields, "COMMENT="+tag.comments)
 			}
-			if tag.Publisher != "" {
-				commentFields = append(commentFields, "PUBLISHER="+tag.Publisher)
+			if tag.publisher != "" {
+				commentFields = append(commentFields, "PUBLISHER="+tag.publisher)
 			}
-			if tag.Composer != "" {
-				commentFields = append(commentFields, "COMPOSER="+tag.Composer)
+			if tag.composer != "" {
+				commentFields = append(commentFields, "COMPOSER="+tag.composer)
 			}
-			if tag.CopyrightMsg != "" {
-				commentFields = append(commentFields, "COPYRIGHT="+tag.CopyrightMsg)
+			if tag.copyrightMsg != "" {
+				commentFields = append(commentFields, "COPYRIGHT="+tag.copyrightMsg)
 			}
 			for key, value := range tag.PassThrough {
 				commentFields = append(commentFields, key+"="+value)
 			}
 			img := []byte{}
-			if tag.AlbumArt != nil {
+			if tag.albumArt != nil {
 				// Convert album art image to JPEG format
 				buf := new(bytes.Buffer)
-				if err = jpeg.Encode(buf, *tag.AlbumArt, nil); err == nil {
+				if err = jpeg.Encode(buf, *tag.albumArt, nil); err == nil {
 					img, _ = createMetadataBlockPicture(buf.Bytes())
 				}
 			}
@@ -743,11 +698,14 @@ func saveVorbisTags(tag *IDTag) error {
 	}
 	// Step 7: Close and rename the files to the original file
 	inputFile.Close()
-	outputFile.Close()
-	if err = os.Rename(tempOut, tag.FilePath); err != nil {
+	file, err := os.OpenFile(tag.filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
 		return err
 	}
-
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
+		return err
+	}
 	return nil
 }
 

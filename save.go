@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"image/jpeg"
 	"log"
-	"strconv"
 
-	mp4tagWriter "github.com/Sorrow446/go-mp4tag"
 	mp3TagLib "github.com/bogem/id3v2"
 	"github.com/go-flac/flacpicture"
 	"github.com/go-flac/flacvorbis"
@@ -17,7 +15,7 @@ import (
 
 // Save saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
 func (tag *IDTag) Save() error {
-	fileType, err := GetFileType(tag.FilePath)
+	fileType, err := GetFileType(tag.filePath)
 	if err != nil {
 		return err
 	}
@@ -30,96 +28,96 @@ func (tag *IDTag) Save() error {
 	} else if fileType == OGG {
 		return saveOGG(tag)
 	}
-	return fmt.Errorf("no method available for filetype:%s", tag.FileType)
+	return fmt.Errorf("no method available for filetype:%s", tag.fileType)
 }
 
 func saveMP3(tag *IDTag) error {
-	mp3Tag, err := mp3TagLib.Open(tag.FilePath, mp3TagLib.Options{Parse: true})
+	mp3Tag, err := mp3TagLib.Open(tag.filePath, mp3TagLib.Options{Parse: true})
 	if err != nil {
 		return err
 	}
 	defer mp3Tag.Close()
-	mp3Tag.SetArtist(tag.Artist)
-	mp3Tag.SetAlbum(tag.Album)
-	mp3Tag.SetTitle(tag.Title)
+	mp3Tag.SetArtist(tag.artist)
+	mp3Tag.SetAlbum(tag.album)
+	mp3Tag.SetTitle(tag.title)
 	textFrame := mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.BPM,
+		Text:     tag.bpm,
 	}
 	mp3Tag.AddFrame("TBPM", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Comments,
+		Text:     tag.comments,
 	}
 	mp3Tag.AddFrame("COMM", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Genre,
+		Text:     tag.genre,
 	}
 	mp3Tag.AddFrame("TCON", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Year,
+		Text:     tag.year,
 	}
 	mp3Tag.AddFrame("TYER", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.AlbumArtist,
+		Text:     tag.albumArtist,
 	}
 	mp3Tag.AddFrame("TPE2", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Composer,
+		Text:     tag.composer,
 	}
 	mp3Tag.AddFrame("TCOM", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.CopyrightMsg,
+		Text:     tag.copyrightMsg,
 	}
 	mp3Tag.AddFrame("TCOP", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Date,
+		Text:     tag.date,
 	}
 	mp3Tag.AddFrame("TDRC", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.EncodedBy,
+		Text:     tag.encodedBy,
 	}
 	mp3Tag.AddFrame("TENC", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Lyricist,
+		Text:     tag.lyricist,
 	}
 	mp3Tag.AddFrame("TEXT", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.FileType,
+		Text:     tag.fileType,
 	}
 	mp3Tag.AddFrame("TFLT", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Language,
+		Text:     tag.language,
 	}
 	mp3Tag.AddFrame("TLAN", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Length,
+		Text:     tag.length,
 	}
 	mp3Tag.AddFrame("TLEN", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.PartOfSet,
+		Text:     tag.partOfSet,
 	}
 	mp3Tag.AddFrame("TPOS", textFrame)
 	textFrame = mp3TagLib.TextFrame{
 		Encoding: mp3TagLib.EncodingUTF8,
-		Text:     tag.Publisher,
+		Text:     tag.publisher,
 	}
 	mp3Tag.AddFrame("TPUB", textFrame)
-	if tag.AlbumArt != nil {
+	if tag.albumArt != nil {
 		buf := new(bytes.Buffer)
-		if err := jpeg.Encode(buf, *tag.AlbumArt, nil); err == nil {
+		if err := jpeg.Encode(buf, *tag.albumArt, nil); err == nil {
 			mp3Tag.AddAttachedPicture(mp3TagLib.PictureFrame{
 				Encoding:    mp3TagLib.EncodingUTF8,
 				MimeType:    "image/jpeg",
@@ -135,92 +133,85 @@ func saveMP3(tag *IDTag) error {
 }
 
 func saveMP4(tag *IDTag) error {
-	var mp4tag mp4tagWriter.MP4Tags
+	var mp4tag Tags
 	var delete []string
-	if tag.Artist != "" {
-		mp4tag.Artist = tag.Artist
+	if tag.artist != "" {
+		mp4tag.Artist = tag.artist
 	} else {
 		delete = append(delete, "artist")
 	}
-	if tag.Album != "" {
-		mp4tag.Album = tag.Album
+	if tag.album != "" {
+		mp4tag.Album = tag.album
 	} else {
 		delete = append(delete, "album")
 	}
-	if tag.AlbumArtist != "" {
-		mp4tag.AlbumArtist = tag.AlbumArtist
+	if tag.albumArtist != "" {
+		mp4tag.AlbumArtist = tag.albumArtist
 	} else {
 		delete = append(delete, "albumArtist")
 	}
-	if tag.Comments != "" {
-		mp4tag.Comment = tag.Comments
+	if tag.comments != "" {
+		mp4tag.Comment = tag.comments
 	} else {
 		delete = append(delete, "comment")
 	}
-	if tag.Composer != "" {
-		mp4tag.Composer = tag.Composer
+	if tag.composer != "" {
+		mp4tag.Composer = tag.composer
 	} else {
 		delete = append(delete, "composer")
 	}
-	if tag.CopyrightMsg != "" {
-		mp4tag.Copyright = tag.CopyrightMsg
+	if tag.copyrightMsg != "" {
+		mp4tag.Copyright = tag.copyrightMsg
 	} else {
 		delete = append(delete, "copyright")
 	}
-	if tag.Genre != "" {
-		mp4tag.CustomGenre = tag.Genre
+	if tag.genre != "" {
+		mp4tag.Genre = tag.genre
 	} else {
 		delete = append(delete, "genre")
 	}
-	if tag.Title != "" {
-		mp4tag.Title = tag.Title
+	if tag.title != "" {
+		mp4tag.Title = tag.title
 	} else {
 		delete = append(delete, "title")
 	}
-	if tag.Year != "" {
-		y, err := strconv.Atoi(tag.Year)
-		if err != nil {
-			mp4tag.Year = int32(y)
-		}
-
+	if tag.year != "" {
+		mp4tag.Year = tag.year
 	} else {
 		delete = append(delete, "year")
 	}
-	if tag.AlbumArt != nil {
+	if tag.albumArt != nil {
 		buf := new(bytes.Buffer)
-		if err := jpeg.Encode(buf, *tag.AlbumArt, nil); err != nil {
-			mp4tag.Pictures = []*mp4tagWriter.MP4Picture{{Format: mp4tagWriter.ImageTypeJPEG, Data: buf.Bytes()}}
+		if err := jpeg.Encode(buf, *tag.albumArt, nil); err != nil {
+			mp4tag.Cover = buf.Bytes()
 		}
 	} else {
 		delete = append(delete, "cover")
 	}
-	mp4, err := mp4tagWriter.Open(tag.FilePath)
-	if err != nil {
-		return err
-	}
-	return mp4.Write(&mp4tag, delete)
+	mp4tag.Delete = delete
+	return WriteMP4(tag.filePath, &mp4tag)
 }
 
 func saveFLAC(tag *IDTag) error {
-	f, err := flac.ParseFile(tag.FilePath)
+	f, err := flac.ParseFile(tag.filePath)
 	if err != nil {
 		return err
 	}
-	_, idx, err := extractFLACComment(tag.FilePath)
+	_, idx, err := extractFLACComment(tag.filePath)
 	if err != nil {
 		return err
 	}
 	cmts := flacvorbis.New()
-	if err := cmts.Add(flacvorbis.FIELD_TITLE, tag.Title); err != nil {
+	if err := cmts.Add(flacvorbis.FIELD_TITLE, tag.title); err != nil {
 		return err
 	}
-	if err := cmts.Add(flacvorbis.FIELD_ALBUM, tag.Album); err != nil {
+	if err := cmts.Add(flacvorbis.FIELD_ALBUM, tag.album); err != nil {
 		return err
 	}
-	if err := cmts.Add(flacvorbis.FIELD_ARTIST, tag.Artist); err != nil {
+	if err := cmts.Add(flacvorbis.FIELD_ARTIST, tag.artist); err != nil {
 		return err
 	}
-	if err := cmts.Add(flacvorbis.FIELD_GENRE, tag.Genre); err != nil {
+	if err := cmts.Add(flacvorbis.FIELD_GENRE, tag.genre); err != nil {
 		return err
 	}
 	cmtsmeta := cmts.Marshal()
@@ -235,9 +226,9 @@ func saveFLAC(tag *IDTag) error {
 	if idx > 0 {
 		f.Meta = removeFLACMetaBlock(f.Meta, idx)
 	}
-	if tag.AlbumArt != nil {
+	if tag.albumArt != nil {
 		buf := new(bytes.Buffer)
-		if err := jpeg.Encode(buf, *tag.AlbumArt, nil); err == nil {
+		if err := jpeg.Encode(buf, *tag.albumArt, nil); err == nil {
 			picture, err := flacpicture.NewFromImageData(flacpicture.PictureTypeFrontCover, "Front cover", buf.Bytes(), "image/jpeg")
 			if err != nil {
 				return err
@@ -247,13 +238,13 @@ func saveFLAC(tag *IDTag) error {
 		}
 
 	}
-	return f.Save(tag.FilePath)
+	return f.Save(tag.filePath)
 }
 
 func saveOGG(tag *IDTag) error {
-	if tag.Codec == "vorbis" {
+	if tag.codec == "vorbis" {
 		return saveVorbisTags(tag)
-	} else if tag.Codec == "opus" {
+	} else if tag.codec == "opus" {
 		return saveOpusTags(tag)
 	}
 	return errors.New("codec not supported for OGG")

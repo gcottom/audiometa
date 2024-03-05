@@ -9,28 +9,29 @@ import (
 // Only the valid types are written to the respective data files.
 // Although a tag may be set, if the function to write that tag attribute doesn't exist, the tag attribute will be ignored and the save function will not produce an error.
 type IDTag struct {
-	Artist       string
-	AlbumArtist  string
-	Album        string
-	AlbumArt     *image.Image
-	Comments     string
-	Composer     string
-	Genre        string
-	Title        string
-	Year         string
-	BPM          string
-	FilePath     string
-	Codec        string
-	CopyrightMsg string
-	Date         string
-	EncodedBy    string
-	Lyricist     string
-	FileType     string
-	Language     string
-	Length       string
-	PartOfSet    string
-	Publisher    string
-	PassThrough  map[string]string
+	artist       string       //Artist
+	albumArtist  string       //AlbumArtist
+	album        string       //Album
+	albumArt     *image.Image //AlbumArt for the work in image format
+	comments     string       //Comments
+	composer     string       //Composer
+	genre        string       //Genre
+	title        string       //Title
+	year         string       //Year
+	bpm          string       //BPM
+	filePath     string       //The filepath of the file
+	codec        string       //The codec of the file (ogg use only)
+	copyrightMsg string       //Copyright Message
+	date         string       //Date
+	encodedBy    string       //Endcoded By
+	lyricist     string       //Lyricist
+	fileType     string       //File Type
+	language     string       //Language
+	length       string       //Length
+	partOfSet    string       //Part of a set
+	publisher    string       //Publisher
+
+	PassThrough map[string]string
 }
 
 // The Picture type contains a byte representation of an image
@@ -84,4 +85,24 @@ var vorbisPictureTypes = map[byte]string{
 	0x12: "Illustration",
 	0x13: "Band/artist logotype",
 	0x14: "Publisher/Studio logotype",
+}
+
+type Tags struct {
+	Album       string
+	AlbumArtist string
+	Artist      string
+	Comment     string
+	Composer    string
+	Copyright   string
+	Cover       []byte
+	Custom      map[string]string
+	Delete      []string
+	DiskNumber  int
+	DiskTotal   int
+	Genre       string
+	Label       string
+	Title       string
+	TrackNumber int
+	TrackTotal  int
+	Year        string
 }
