@@ -168,7 +168,7 @@ type metadataOgg struct {
 
 type metadataVorbis struct {
 	c map[string]string // the vorbis comments
-	p *Picture
+	p []byte
 }
 
 // Read the vorbis comments from an ogg vorbis or ogg opus file
@@ -228,9 +228,8 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 		}
 		m.readPictureBlock(bytes.NewReader(data))
 	}
-	albumArt := m.p
-	if albumArt != nil {
-		if img, _, err := image.Decode(bytes.NewReader(albumArt.Data)); err == nil {
+	if len(m.p) > 0 {
+		if img, _, err := image.Decode(bytes.NewReader(m.p)); err == nil {
 			resultTag.albumArt = &img
 		}
 	}
@@ -239,57 +238,43 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 
 // Read the vorbis comment picture block
 func (m *metadataVorbis) readPictureBlock(r io.Reader) error {
-	b, err := readInt(r, 4)
-	if err != nil {
+	//skipping picture type
+	if _, err := readInt(r, 4); err != nil {
 		return err
-	}
-	pictureType, ok := vorbisPictureTypes[byte(b)]
-	if !ok {
-		return fmt.Errorf("invalid picture type: %v", b)
 	}
 	mimeLen, err := readUint(r, 4)
 	if err != nil {
 		return err
 	}
-	mime, err := readString(r, mimeLen)
-	if err != nil {
+	//skipping mime type
+	if _, err := readString(r, mimeLen); err != nil {
 		return err
 	}
-
-	ext := ""
-	switch mime {
-	case "image/jpeg":
-		ext = "jpg"
-	case "image/png":
-		ext = "png"
-	case "image/gif":
-		ext = "gif"
-	}
-
 	descLen, err := readUint(r, 4)
 	if err != nil {
 		return err
 	}
-	desc, err := readString(r, descLen)
-	if err != nil {
+	//skipping description
+	if _, err := readString(r, descLen); err != nil {
 		return err
 	}
 
-	// We skip width <32>, height <32>, colorDepth <32>, coloresUsed <32>
-	_, err = readInt(r, 4) // width
-	if err != nil {
+	//skip width <32>, height <32>, colorDepth <32>, coloresUsed <32>
+
+	// width
+	if _, err = readInt(r, 4); err != nil {
 		return err
 	}
-	_, err = readInt(r, 4) // height
-	if err != nil {
+	// height
+	if _, err = readInt(r, 4); err != nil {
 		return err
 	}
-	_, err = readInt(r, 4) // color depth
-	if err != nil {
+	// color depth
+	if _, err = readInt(r, 4); err != nil {
 		return err
 	}
-	_, err = readInt(r, 4) // colors used
-	if err != nil {
+	// colors used
+	if _, err = readInt(r, 4); err != nil {
 		return err
 	}
 
@@ -302,13 +287,7 @@ func (m *metadataVorbis) readPictureBlock(r io.Reader) error {
 		return err
 	}
 
-	m.p = &Picture{
-		Ext:         ext,
-		MIMEType:    mime,
-		Type:        pictureType,
-		Description: desc,
-		Data:        data,
-	}
+	m.p = data
 	return nil
 }
 

@@ -186,13 +186,9 @@ func parseMP4(filepath string) (*IDTag, error) {
 		return nil, err
 	}
 	resultTag = IDTag{artist: tag.artist(), albumArtist: tag.albumArtist(), album: tag.album(),
-		comments: tag.comment(), composer: tag.composer(), genre: tag.genre(),
+		albumArt: tag.picture(), comments: tag.comment(), composer: tag.composer(), genre: tag.genre(),
 		title: tag.title(), year: strconv.Itoa(tag.year()), encodedBy: tag.encoder(),
 		copyrightMsg: tag.copyright(), bpm: strconv.Itoa(tag.tempo()), filePath: filepath}
-	if tag.picture() != nil {
-		if img, _, err := image.Decode(bytes.NewReader(tag.picture())); err == nil {
-			resultTag.albumArt = &img
-		}
-	}
+
 	return &resultTag, nil
 }
