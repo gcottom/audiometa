@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	mp3TagLib "github.com/bogem/id3v2"
+	mp3TagLib "github.com/bogem/id3v2/v2"
 	"github.com/go-flac/flacpicture"
 	flac "github.com/go-flac/go-flac"
 )

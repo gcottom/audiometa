@@ -234,7 +234,7 @@ func getAtomsList() []mp4.BoxType {
 	return atomsList
 }
 
-func WriteMP4(trackPath string, _tags *IDTag, delete MP4Delete) error {
+func writeMP4(trackPath string, _tags *IDTag, delete MP4Delete) error {
 	var currentKey string
 	ctx := mp4.Context{UnderIlstMeta: true}
 	atomsList := getAtomsList()

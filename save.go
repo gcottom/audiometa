@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"image/jpeg"
+	"io"
+	"os"
 	"reflect"
 
-	mp3TagLib "github.com/bogem/id3v2"
+	"github.com/aler9/writerseeker"
+	mp3TagLib "github.com/bogem/id3v2/v2"
 	"github.com/go-flac/flacpicture"
 	"github.com/go-flac/flacvorbis"
 	"github.com/go-flac/go-flac"
@@ -63,7 +66,42 @@ func saveMP3(tag *IDTag) error {
 		}
 		mp3Tag.AddFrame(mp3TextFrames[fieldName], textFrame)
 	}
-	return mp3Tag.Save()
+	file, err := os.Open(tag.filePath)
+	if err != nil {
+		return err
+	}
+	originalSize, err := parseHeader(file)
+	if err != nil {
+		return err
+	}
+	ws := &writerseeker.WriterSeeker{}
+	// Write tag in new file.
+	if _, err = mp3Tag.WriteTo(ws); err != nil {
+		return err
+	}
+
+	// Seek to a music part of original file.
+	if _, err = file.Seek(originalSize, io.SeekStart); err != nil {
+		return err
+	}
+
+	// Write to new file the music part.
+	buf := getByteSlice(128 * 1024)
+	defer putByteSlice(buf)
+	if _, err = io.CopyBuffer(ws, file, buf); err != nil {
+		return err
+	}
+	file.Close()
+	ofile, err := os.OpenFile(tag.filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer ofile.Close()
+	if _, err = ofile.Write(ws.Bytes()); err != nil {
+		return err
+	}
+	ofile.Close()
+	return nil
 }
 
 func saveMP4(tag *IDTag) error {
@@ -79,7 +117,7 @@ func saveMP4(tag *IDTag) error {
 			delete = append(delete, fieldName)
 		}
 	}
-	return WriteMP4(tag.filePath, tag, delete)
+	return writeMP4(tag.filePath, tag, delete)
 }
 
 func saveFLAC(tag *IDTag) error {
