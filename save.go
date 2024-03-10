@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image/jpeg"
 	"io"
-	"os"
 	"reflect"
 
 	"github.com/aler9/writerseeker"
@@ -35,7 +34,8 @@ func (tag *IDTag) Save() error {
 }
 
 func saveMP3(tag *IDTag) error {
-	mp3Tag, err := mp3TagLib.Open(tag.filePath, mp3TagLib.Options{Parse: true})
+	r := bytes.NewReader(tag.data)
+	mp3Tag, err := mp3TagLib.ParseReader(r, mp3TagLib.Options{Parse: true})
 	if err != nil {
 		return err
 	}
@@ -43,6 +43,9 @@ func saveMP3(tag *IDTag) error {
 	fields := reflect.VisibleFields(reflect.TypeOf(*tag))
 	for _, field := range fields {
 		fieldName := field.Name
+		if fieldName == "data" {
+			continue
+		}
 		if fieldName == "albumArt" {
 			if reflect.ValueOf(*tag).FieldByName(fieldName).IsNil() {
 				mp3Tag.DeleteFrames(mp3TextFrames[fieldName])
@@ -64,13 +67,13 @@ func saveMP3(tag *IDTag) error {
 			Encoding: mp3TagLib.EncodingUTF8,
 			Text:     reflect.ValueOf(*tag).FieldByName(fieldName).String(),
 		}
-		mp3Tag.AddFrame(mp3TextFrames[fieldName], textFrame)
+		_, ok := mp3TextFrames[fieldName]
+		if ok {
+			mp3Tag.AddFrame(mp3TextFrames[fieldName], textFrame)
+		}
+
 	}
-	file, err := os.Open(tag.filePath)
-	if err != nil {
-		return err
-	}
-	originalSize, err := parseHeader(file)
+	originalSize, err := parseHeader(bytes.NewReader(tag.data))
 	if err != nil {
 		return err
 	}
@@ -79,29 +82,19 @@ func saveMP3(tag *IDTag) error {
 	if _, err = mp3Tag.WriteTo(ws); err != nil {
 		return err
 	}
-
 	// Seek to a music part of original file.
-	if _, err = file.Seek(originalSize, io.SeekStart); err != nil {
+	if _, err = r.Seek(originalSize, io.SeekStart); err != nil {
 		return err
 	}
 
 	// Write to new file the music part.
 	buf := getByteSlice(128 * 1024)
 	defer putByteSlice(buf)
-	if _, err = io.CopyBuffer(ws, file, buf); err != nil {
+	if _, err = io.CopyBuffer(ws, r, buf); err != nil {
 		return err
 	}
-	file.Close()
-	ofile, err := os.OpenFile(tag.filePath, os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer ofile.Close()
-	if _, err = ofile.Write(ws.Bytes()); err != nil {
-		return err
-	}
-	ofile.Close()
-	return nil
+	buffy := ws.Bytes()
+	return WriteFile(tag.filePath, buffy)
 }
 
 func saveMP4(tag *IDTag) error {
@@ -109,6 +102,9 @@ func saveMP4(tag *IDTag) error {
 	fields := reflect.VisibleFields(reflect.TypeOf(*tag))
 	for _, field := range fields {
 		fieldName := field.Name
+		if fieldName == "data" {
+			continue
+		}
 		if fieldName == "albumArt" && reflect.ValueOf(*tag).FieldByName(fieldName).IsNil() {
 			delete = append(delete, fieldName)
 			continue
@@ -117,7 +113,13 @@ func saveMP4(tag *IDTag) error {
 			delete = append(delete, fieldName)
 		}
 	}
-	return writeMP4(tag.filePath, tag, delete)
+	r := bytes.NewReader(tag.data)
+	buffy, err := writeMP4(r, tag, delete)
+	if err != nil {
+		return err
+	}
+	return WriteFile(tag.filePath, buffy)
+
 }
 
 func saveFLAC(tag *IDTag) error {
@@ -125,7 +127,8 @@ func saveFLAC(tag *IDTag) error {
 	if err != nil {
 		return err
 	}
-	_, idx, err := extractFLACComment(tag.filePath)
+	r := bytes.NewReader(tag.data)
+	fb, err := extractFLACComment(r)
 	if err != nil {
 		return err
 	}
@@ -143,15 +146,14 @@ func saveFLAC(tag *IDTag) error {
 		return err
 	}
 	cmtsmeta := cmts.Marshal()
-	if idx > 0 {
-		f.Meta = removeFLACMetaBlock(f.Meta, idx)
+	if fb.cmtIdx > 0 {
+		f.Meta = removeFLACMetaBlock(f.Meta, fb.cmtIdx)
 		f.Meta = append(f.Meta, &cmtsmeta)
 	} else {
 		f.Meta = append(f.Meta, &cmtsmeta)
 	}
-	idx = getFLACPictureIndex(f.Meta)
-	if idx > 0 {
-		f.Meta = removeFLACMetaBlock(f.Meta, idx)
+	if fb.picIdx > 0 {
+		f.Meta = removeFLACMetaBlock(f.Meta, fb.picIdx)
 	}
 	if tag.albumArt != nil {
 		buf := new(bytes.Buffer)
@@ -165,14 +167,25 @@ func saveFLAC(tag *IDTag) error {
 		}
 
 	}
-	return f.Save(tag.filePath)
+
+	//[]byte for future use
+	buffy := f.Marshal()
+	return WriteFile(tag.filePath, buffy)
 }
 
 func saveOGG(tag *IDTag) error {
 	if tag.codec == "vorbis" {
-		return saveVorbisTags(tag)
+		buffy, err := saveVorbisTags(tag)
+		if err != nil {
+			return err
+		}
+		return WriteFile(tag.filePath, buffy)
 	} else if tag.codec == "opus" {
-		return saveOpusTags(tag)
+		buffy, err := saveOpusTags(tag)
+		if err != nil {
+			return err
+		}
+		return WriteFile(tag.filePath, buffy)
 	}
 	return errors.New("codec not supported for OGG")
 }

@@ -1,28 +1,50 @@
 package audiometa
 
 import (
+	"bytes"
+	"image"
+	"io"
+
+	"github.com/go-flac/flacpicture"
 	"github.com/go-flac/flacvorbis"
 	"github.com/go-flac/go-flac"
 )
 
-func extractFLACComment(fileName string) (*flacvorbis.MetaDataBlockVorbisComment, int, error) {
-	f, err := flac.ParseFile(fileName)
-	if err != nil {
-		return nil, 0, err
-	}
+type flacBlock struct {
+	cmts   *flacvorbis.MetaDataBlockVorbisComment
+	pic    *image.Image
+	picIdx int
+	cmtIdx int
+}
 
-	var cmt *flacvorbis.MetaDataBlockVorbisComment
-	var cmtIdx int
+func extractFLACComment(input io.Reader) (*flacBlock, error) {
+	fb := flacBlock{}
+	f, err := flac.ParseBytes(input)
+	if err != nil {
+		return nil, err
+	}
 	for idx, meta := range f.Meta {
 		if meta.Type == flac.VorbisComment {
-			cmt, err = flacvorbis.ParseFromMetaDataBlock(*meta)
-			cmtIdx = idx
+			fb.cmts, err = flacvorbis.ParseFromMetaDataBlock(*meta)
+			fb.cmtIdx = idx
 			if err != nil {
-				return nil, 0, err
+				return nil, err
+			}
+			continue
+		} else if meta.Type == flac.Picture {
+			if pic, err := flacpicture.ParseFromMetaDataBlock(*meta); err == nil {
+				if pic != nil {
+					if img, _, err := image.Decode(bytes.NewReader(pic.ImageData)); err == nil {
+						fb.pic = &img
+						fb.picIdx = idx
+					}
+				}
+				continue
 			}
 		}
 	}
-	return cmt, cmtIdx, nil
+
+	return &fb, nil
 }
 func getFLACPictureIndex(metaIn []*flac.MetaDataBlock) int {
 	var cmtIdx = 0

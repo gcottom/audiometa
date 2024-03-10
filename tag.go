@@ -9,7 +9,7 @@ import (
 // OpenTag Opens the ID tag for the corresponding file as long as it is a supported filetype
 // Use the OpenTag command and you will be able to access all metadata associated with the file
 func OpenTag(filepath string) (*IDTag, error) {
-	return parse(filepath)
+	return parseFile(filepath)
 }
 
 // SaveTag saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails

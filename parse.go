@@ -4,36 +4,103 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"io"
 	"os"
 	"strconv"
 	"strings"
 
 	mp3TagLib "github.com/bogem/id3v2/v2"
-	"github.com/go-flac/flacpicture"
-	flac "github.com/go-flac/go-flac"
+	"github.com/sunfish-shogi/bufseekio"
 )
 
 // This operation opens the ID tag for the corresponding file that is passed in the filepath parameter regardless of the filetype as long as it is a supported file type
-func parse(filepath string) (*IDTag, error) {
+
+// parse will assume that the file is in memory
+func parse(input io.Reader, opts ParseOptions) (*IDTag, error) {
+	format := opts.Format
+	b := new(bytes.Buffer)
+	b.ReadFrom(input)
+	data := b.Bytes()
+	switch {
+	case format == MP3:
+		tag, err := parseMP3(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		tag.data = data
+		return tag, nil
+	case fileTypesContains(format, mp4FileTypes):
+		tag, err := parseMP4(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		tag.data = data
+		return tag, nil
+	case format == FLAC:
+		tag, err := parseFLAC(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		tag.data = data
+		return tag, nil
+	case format == OGG:
+		tag, err := parseOGG(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		tag.data = data
+		return tag, nil
+	}
+	return nil, fmt.Errorf("no method available for filetype:%s", format)
+}
+
+// parseFile assumes that the file is to be read from the path
+func parseFile(filepath string) (*IDTag, error) {
 	fileType, err := GetFileType(filepath)
 	if err != nil {
 		return nil, err
 	}
-	if fileType == MP3 {
-		return parseMP3(filepath)
-	} else if fileType == FLAC {
-		return parseFLAC(filepath)
-	} else if fileType == OGG {
-		return parseOGG(filepath)
-	} else if fileType == M4P || fileType == M4A || fileType == M4B || fileType == MP4 {
-		return parseMP4(filepath)
+	file, err := os.OpenFile(filepath, os.O_RDONLY, 0755)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	switch {
+	case fileType == MP3:
+		tag, err := parseMP3(file)
+		if err != nil {
+			return nil, err
+		}
+		tag.filePath = filepath
+		return tag, nil
+	case fileTypesContains(fileType, mp4FileTypes):
+		tag, err := parseMP4(file)
+		if err != nil {
+			return nil, err
+		}
+		tag.filePath = filepath
+		return tag, nil
+	case fileType == FLAC:
+		tag, err := parseFLAC(file)
+		if err != nil {
+			return nil, err
+		}
+		tag.filePath = filepath
+		return tag, nil
+
+	case fileType == OGG:
+		tag, err := parseOGG(file)
+		if err != nil {
+			return nil, err
+		}
+		tag.filePath = filepath
+		return tag, nil
 	}
 	return nil, fmt.Errorf("no method available for filetype:%s", fileType)
 }
-
-func parseMP3(filepath string) (*IDTag, error) {
+func parseMP3(input io.Reader) (*IDTag, error) {
 	resultTag := IDTag{}
-	tag, err := mp3TagLib.Open(filepath, mp3TagLib.Options{Parse: true})
+	tag, err := mp3TagLib.ParseReader(input, mp3TagLib.Options{Parse: true})
 	if err != nil {
 		return nil, fmt.Errorf("error opening mp3 [%w]", err)
 	}
@@ -110,14 +177,17 @@ func parseMP3(filepath string) (*IDTag, error) {
 			resultTag.albumArt = &img
 		}
 	}
-	resultTag.filePath = filepath
 	return &resultTag, nil
 }
 
-func parseFLAC(filepath string) (*IDTag, error) {
-	resultTag := IDTag{filePath: filepath}
-	if cmts, _, err := extractFLACComment(filepath); cmts != nil && err == nil {
-		for _, cmt := range cmts.Comments {
+func parseFLAC(input io.Reader) (*IDTag, error) {
+	resultTag := IDTag{}
+	fb, err := extractFLACComment(input)
+	if err != nil {
+		return nil, err
+	}
+	if fb.cmts != nil {
+		for _, cmt := range fb.cmts.Comments {
 			if sp := strings.Split(cmt, "="); len(sp) == 2 {
 				flactag := strings.ToLower(sp[0])
 				if flactag == ALBUM {
@@ -133,62 +203,26 @@ func parseFLAC(filepath string) (*IDTag, error) {
 				}
 			}
 		}
-	} else if err != nil {
-		return nil, err
 	}
-	file, err := os.Open(filepath)
-	if err != nil {
-		return &resultTag, nil
-	}
-	f, err := flac.ParseBytes(file)
-	if err != nil {
-		return &resultTag, nil
-	}
-	var pic *flacpicture.MetadataBlockPicture
-	for _, meta := range f.Meta {
-		if meta.Type == flac.Picture {
-			if pic, err = flacpicture.ParseFromMetaDataBlock(*meta); err == nil {
-				break
-			}
-		}
-	}
-	if pic != nil {
-		if img, _, err := image.Decode(bytes.NewReader(pic.ImageData)); err == nil {
-			resultTag.albumArt = &img
-		}
-	}
+	resultTag.albumArt = fb.pic
 	return &resultTag, nil
 }
 
-func parseOGG(filepath string) (*IDTag, error) {
-	f, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	tag, err := readOggTags(f)
-	if err != nil {
-		return nil, err
-	}
-	tag.filePath = filepath
-	return tag, nil
+func parseOGG(input io.Reader) (*IDTag, error) {
+	return readOggTags(input)
 }
 
-func parseMP4(filepath string) (*IDTag, error) {
+func parseMP4(input io.ReadSeeker) (*IDTag, error) {
 	resultTag := IDTag{}
-	f, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	tag, err := readFromMP4(f)
+	r := bufseekio.NewReadSeeker(input, 128*1024, 4)
+	tag, err := readFromMP4(r)
 	if err != nil {
 		return nil, err
 	}
 	resultTag = IDTag{artist: tag.artist(), albumArtist: tag.albumArtist(), album: tag.album(),
 		albumArt: tag.picture(), comments: tag.comment(), composer: tag.composer(), genre: tag.genre(),
 		title: tag.title(), year: strconv.Itoa(tag.year()), encodedBy: tag.encoder(),
-		copyrightMsg: tag.copyright(), bpm: strconv.Itoa(tag.tempo()), filePath: filepath}
+		copyrightMsg: tag.copyright(), bpm: strconv.Itoa(tag.tempo())}
 
 	return &resultTag, nil
 }
