@@ -1,6 +1,7 @@
 package audiometa
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,6 +48,7 @@ func TestWriteTagsMP3FromEmpty(t *testing.T) {
 	tag.filePath = path
 	err = SaveTag(tag)
 	if err != nil {
+		fmt.Println(err)
 		t.Fatal("Error saving!")
 	}
 	f.Seek(0, 0)

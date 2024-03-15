@@ -234,14 +234,13 @@ func getAtomsList() []mp4.BoxType {
 	return atomsList
 }
 
-func writeMP4(input io.ReadSeeker, _tags *IDTag, delete MP4Delete) ([]byte, error) {
+func writeMP4(r *bufseekio.ReadSeeker, _tags *IDTag, delete MP4Delete) ([]byte, error) {
 	var currentKey string
 	ctx := mp4.Context{UnderIlstMeta: true}
 	atomsList := getAtomsList()
 
 	ws := &writerseeker.WriterSeeker{}
-	r := bufseekio.NewReadSeeker(input, 128*1024, 4)
-	atoms, err := populateAtoms(input, _tags)
+	atoms, err := populateAtoms(r, _tags)
 	if err != nil {
 		return nil, err
 	}

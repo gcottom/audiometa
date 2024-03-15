@@ -2,6 +2,7 @@ package audiometa
 
 import (
 	"image"
+	"io"
 )
 
 // The IDTag represents all of the metadata that can be retrieved from a file.
@@ -30,7 +31,8 @@ type IDTag struct {
 	length       string       //Length
 	partOfSet    string       //Part of a set
 	publisher    string       //Publisher
-	data         []byte
+
+	reader io.ReadSeeker
 
 	PassThrough map[string]string
 }

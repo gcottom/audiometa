@@ -13,12 +13,16 @@ import (
 	"github.com/go-flac/flacpicture"
 	"github.com/go-flac/flacvorbis"
 	"github.com/go-flac/go-flac"
+	"github.com/sunfish-shogi/bufseekio"
 )
 
 // Save saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
 func (tag *IDTag) Save() error {
 	fileType, err := GetFileType(tag.filePath)
 	if err != nil {
+		return err
+	}
+	if _, err := tag.reader.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 	if fileType == MP3 {
@@ -34,23 +38,17 @@ func (tag *IDTag) Save() error {
 }
 
 func saveMP3(tag *IDTag) error {
-	r := bytes.NewReader(tag.data)
+	r := tag.reader
 	mp3Tag, err := mp3TagLib.ParseReader(r, mp3TagLib.Options{Parse: true})
 	if err != nil {
 		return err
 	}
-	defer mp3Tag.Close()
-	fields := reflect.VisibleFields(reflect.TypeOf(*tag))
-	for _, field := range fields {
-		fieldName := field.Name
-		if fieldName == "data" {
+	for k, v := range mp3TextFrames {
+		if reflect.ValueOf(*tag).FieldByName(k).IsZero() {
+			mp3Tag.DeleteFrames(v)
 			continue
 		}
-		if fieldName == "albumArt" {
-			if reflect.ValueOf(*tag).FieldByName(fieldName).IsNil() {
-				mp3Tag.DeleteFrames(mp3TextFrames[fieldName])
-				continue
-			}
+		if k == "albumArt" {
 			buf := new(bytes.Buffer)
 			if err := jpeg.Encode(buf, *tag.albumArt, nil); err == nil {
 				mp3Tag.AddAttachedPicture(mp3TagLib.PictureFrame{
@@ -65,15 +63,14 @@ func saveMP3(tag *IDTag) error {
 		}
 		textFrame := mp3TagLib.TextFrame{
 			Encoding: mp3TagLib.EncodingUTF8,
-			Text:     reflect.ValueOf(*tag).FieldByName(fieldName).String(),
+			Text:     reflect.ValueOf(*tag).FieldByName(k).String(),
 		}
-		_, ok := mp3TextFrames[fieldName]
-		if ok {
-			mp3Tag.AddFrame(mp3TextFrames[fieldName], textFrame)
-		}
-
+		mp3Tag.AddFrame(v, textFrame)
 	}
-	originalSize, err := parseHeader(bytes.NewReader(tag.data))
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+	originalSize, err := parseHeader(r)
 	if err != nil {
 		return err
 	}
@@ -102,7 +99,7 @@ func saveMP4(tag *IDTag) error {
 	fields := reflect.VisibleFields(reflect.TypeOf(*tag))
 	for _, field := range fields {
 		fieldName := field.Name
-		if fieldName == "data" {
+		if fieldName == "data" || fieldName == "reader" {
 			continue
 		}
 		if fieldName == "albumArt" && reflect.ValueOf(*tag).FieldByName(fieldName).IsNil() {
@@ -113,7 +110,7 @@ func saveMP4(tag *IDTag) error {
 			delete = append(delete, fieldName)
 		}
 	}
-	r := bytes.NewReader(tag.data)
+	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	buffy, err := writeMP4(r, tag, delete)
 	if err != nil {
 		return err
@@ -123,11 +120,14 @@ func saveMP4(tag *IDTag) error {
 }
 
 func saveFLAC(tag *IDTag) error {
-	f, err := flac.ParseFile(tag.filePath)
+	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
+	f, err := flac.ParseBytes(r)
 	if err != nil {
 		return err
 	}
-	r := bytes.NewReader(tag.data)
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
 	fb, err := extractFLACComment(r)
 	if err != nil {
 		return err

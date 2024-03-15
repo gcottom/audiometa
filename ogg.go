@@ -10,6 +10,8 @@ import (
 	"image/jpeg"
 	"io"
 	"strings"
+
+	"github.com/sunfish-shogi/bufseekio"
 )
 
 var (
@@ -362,7 +364,7 @@ func clearTagsOpus(input io.Reader) ([]byte, error) {
 // Saves the tags for an ogg Opus file
 func saveOpusTags(tag *IDTag) ([]byte, error) {
 	// Step 1: Clear existing tags from the file
-	r := bytes.NewReader(tag.data)
+	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	buffy, err := clearTagsOpus(r)
 	if err != nil {
 		return nil, err
@@ -536,7 +538,7 @@ func clearTagsVorbis(input io.Reader) ([]byte, error) {
 
 // Saves the given tag structure to a ogg vorbis audio file
 func saveVorbisTags(tag *IDTag) ([]byte, error) {
-	r := bytes.NewReader(tag.data)
+	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	// Step 1: Clear existing tags from the file
 	buffy, err := clearTagsVorbis(r)
 	if err != nil {
