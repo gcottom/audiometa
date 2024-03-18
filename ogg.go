@@ -365,13 +365,9 @@ func clearTagsOpus(input io.Reader) ([]byte, error) {
 func saveOpusTags(tag *IDTag) ([]byte, error) {
 	// Step 1: Clear existing tags from the file
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
-	buffy, err := clearTagsOpus(r)
-	if err != nil {
-		return nil, err
-	}
 
 	// Step 2: Open the input file and create an Ogg decoder
-	decoder := newOggDecoder(bytes.NewReader(buffy))
+	decoder := newOggDecoder(r)
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return nil, err
@@ -463,7 +459,7 @@ func saveOpusTags(tag *IDTag) ([]byte, error) {
 		}
 	}
 	// Step 7: Close and rename the files to the original file
-	buffy = bb.Bytes()
+	buffy := bb.Bytes()
 	return buffy, nil
 }
 
@@ -540,13 +536,9 @@ func clearTagsVorbis(input io.Reader) ([]byte, error) {
 func saveVorbisTags(tag *IDTag) ([]byte, error) {
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	// Step 1: Clear existing tags from the file
-	buffy, err := clearTagsVorbis(r)
-	if err != nil {
-		return nil, err
-	}
 
 	// Step 2: Open the input file and create an Ogg decoder
-	decoder := newOggDecoder(bytes.NewReader(buffy))
+	decoder := newOggDecoder(r)
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return nil, err
@@ -637,7 +629,7 @@ func saveVorbisTags(tag *IDTag) ([]byte, error) {
 		}
 	}
 	// Step 7: Close and rename the files to the original file
-	buffy = bb.Bytes()
+	buffy := bb.Bytes()
 	return buffy, nil
 }
 
