@@ -22,8 +22,8 @@ func Open(r io.ReadSeeker, p ParseOptions) (*IDTag, error) {
 }
 
 // SaveTag saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
-func SaveTag(tag *IDTag) error {
-	return tag.Save()
+func SaveTag(tag *IDTag, w io.Writer) error {
+	return tag.Save(w)
 }
 
 // ClearAllTags clears all tags except the fileUrl tag which is used to reference the file, takes an optional parameter "preserveUnkown": when this is true passThroughMap is not cleared and unknown tags are preserved

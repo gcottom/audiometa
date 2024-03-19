@@ -17,18 +17,18 @@ type flacBlock struct {
 	cmtIdx int
 }
 
-func extractFLACComment(input io.Reader) (*flacBlock, error) {
+func extractFLACComment(input io.Reader) (*flac.File, *flacBlock, error) {
 	fb := flacBlock{}
-	f, err := flac.ParseBytes(input)
+	f, err := flac.ParseMetadata(input)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for idx, meta := range f.Meta {
 		if meta.Type == flac.VorbisComment {
 			fb.cmts, err = flacvorbis.ParseFromMetaDataBlock(*meta)
 			fb.cmtIdx = idx
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			continue
 		} else if meta.Type == flac.Picture {
@@ -44,18 +44,26 @@ func extractFLACComment(input io.Reader) (*flacBlock, error) {
 		}
 	}
 
-	return &fb, nil
+	return f, &fb, nil
 }
-func getFLACPictureIndex(metaIn []*flac.MetaDataBlock) int {
-	var cmtIdx = 0
-	for idx, meta := range metaIn {
-		if meta.Type == flac.Picture {
-			cmtIdx = idx
-			break
-		}
-	}
-	return cmtIdx
-}
+
 func removeFLACMetaBlock(slice []*flac.MetaDataBlock, s int) []*flac.MetaDataBlock {
 	return append(slice[:s], slice[s+1:]...)
+}
+
+func flacSave(r io.Reader, w io.Writer, m []*flac.MetaDataBlock) error {
+	if _, err := w.Write([]byte("fLaC")); err != nil {
+		return err
+	}
+	for i, meta := range m {
+		last := i == len(m)-1
+		if _, err := w.Write(meta.Marshal(last)); err != nil {
+			return err
+		}
+	}
+	if _, err := io.Copy(w, r); err != nil {
+		return err
+	}
+	return nil
+
 }

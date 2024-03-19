@@ -148,9 +148,9 @@ func main() {
 							}
 						}
 					}
-					if err = tag.Save(); err != nil {
+					/*if err = tag.Save(); err != nil {
 						fmt.Println(err)
-					}
+					}*/
 				}
 
 			} else if mode == "c" || mode == "clear" || mode == "e" || mode == "empty" || mode == "-c" || mode == "-clear" || mode == "-e" || mode == "-empty" {
@@ -159,10 +159,10 @@ func main() {
 					panic(err)
 				}
 				tag.ClearAllTags(false)
-				err = tag.Save()
+				/*err = tag.Save()
 				if err != nil {
 					fmt.Println(err)
-				}
+				}*/
 
 			} else if mode == "h" || mode == "-h" || mode == "-help" || mode == "help" {
 				if args[1] == "r" || args[1] == "p" || args[1] == "parse" || args[1] == "read" {

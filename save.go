@@ -8,16 +8,14 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/aler9/writerseeker"
 	mp3TagLib "github.com/bogem/id3v2/v2"
 	"github.com/go-flac/flacpicture"
 	"github.com/go-flac/flacvorbis"
-	"github.com/go-flac/go-flac"
 	"github.com/sunfish-shogi/bufseekio"
 )
 
 // Save saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
-func (tag *IDTag) Save() error {
+func (tag *IDTag) Save(w io.Writer) error {
 	fileType, err := GetFileType(tag.filePath)
 	if err != nil {
 		return err
@@ -26,18 +24,18 @@ func (tag *IDTag) Save() error {
 		return err
 	}
 	if fileType == MP3 {
-		return saveMP3(tag)
+		return saveMP3(tag, w)
 	} else if fileType == M4A || fileType == M4B || fileType == M4P || fileType == MP4 {
-		return saveMP4(tag)
+		return saveMP4(tag, w)
 	} else if fileType == FLAC {
-		return saveFLAC(tag)
+		return saveFLAC(tag, w)
 	} else if fileType == OGG {
-		return saveOGG(tag)
+		return saveOGG(tag, w)
 	}
 	return fmt.Errorf("no method available for filetype:%s", tag.fileType)
 }
 
-func saveMP3(tag *IDTag) error {
+func saveMP3(tag *IDTag, w io.Writer) error {
 	r := tag.reader
 	mp3Tag, err := mp3TagLib.ParseReader(r, mp3TagLib.Options{Parse: true})
 	if err != nil {
@@ -74,9 +72,8 @@ func saveMP3(tag *IDTag) error {
 	if err != nil {
 		return err
 	}
-	ws := &writerseeker.WriterSeeker{}
 	// Write tag in new file.
-	if _, err = mp3Tag.WriteTo(ws); err != nil {
+	if _, err = mp3Tag.WriteTo(w); err != nil {
 		return err
 	}
 	// Seek to a music part of original file.
@@ -87,14 +84,13 @@ func saveMP3(tag *IDTag) error {
 	// Write to new file the music part.
 	buf := getByteSlice(128 * 1024)
 	defer putByteSlice(buf)
-	if _, err = io.CopyBuffer(ws, r, buf); err != nil {
+	if _, err = io.CopyBuffer(w, r, buf); err != nil {
 		return err
 	}
-	buffy := ws.Bytes()
-	return WriteFile(tag.filePath, buffy)
+	return nil
 }
 
-func saveMP4(tag *IDTag) error {
+func saveMP4(tag *IDTag, w io.Writer) error {
 	var delete MP4Delete
 	fields := reflect.VisibleFields(reflect.TypeOf(*tag))
 	for _, field := range fields {
@@ -111,24 +107,13 @@ func saveMP4(tag *IDTag) error {
 		}
 	}
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
-	buffy, err := writeMP4(r, tag, delete)
-	if err != nil {
-		return err
-	}
-	return WriteFile(tag.filePath, buffy)
+	return writeMP4(r, w, tag, delete)
 
 }
 
-func saveFLAC(tag *IDTag) error {
+func saveFLAC(tag *IDTag, w io.Writer) error {
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
-	f, err := flac.ParseBytes(r)
-	if err != nil {
-		return err
-	}
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return err
-	}
-	fb, err := extractFLACComment(r)
+	f, fb, err := extractFLACComment(r)
 	if err != nil {
 		return err
 	}
@@ -167,25 +152,14 @@ func saveFLAC(tag *IDTag) error {
 		}
 
 	}
-
-	//[]byte for future use
-	buffy := f.Marshal()
-	return WriteFile(tag.filePath, buffy)
+	return flacSave(r, w, f.Meta)
 }
 
-func saveOGG(tag *IDTag) error {
+func saveOGG(tag *IDTag, w io.Writer) error {
 	if tag.codec == "vorbis" {
-		buffy, err := saveVorbisTags(tag)
-		if err != nil {
-			return err
-		}
-		return WriteFile(tag.filePath, buffy)
+		return saveVorbisTags(tag, w)
 	} else if tag.codec == "opus" {
-		buffy, err := saveOpusTags(tag)
-		if err != nil {
-			return err
-		}
-		return WriteFile(tag.filePath, buffy)
+		return saveOpusTags(tag, w)
 	}
 	return errors.New("codec not supported for OGG")
 }

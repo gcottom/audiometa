@@ -88,7 +88,7 @@ func parseMP3(input io.Reader) (*IDTag, error) {
 
 func parseFLAC(input io.Reader) (*IDTag, error) {
 	resultTag := IDTag{}
-	fb, err := extractFLACComment(input)
+	_, fb, err := extractFLACComment(input)
 	if err != nil {
 		return nil, err
 	}

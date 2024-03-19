@@ -234,7 +234,7 @@ func getAtomsList() []mp4.BoxType {
 	return atomsList
 }
 
-func writeMP4(r *bufseekio.ReadSeeker, _tags *IDTag, delete MP4Delete) ([]byte, error) {
+func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Delete) error {
 	var currentKey string
 	ctx := mp4.Context{UnderIlstMeta: true}
 	atomsList := getAtomsList()
@@ -242,7 +242,7 @@ func writeMP4(r *bufseekio.ReadSeeker, _tags *IDTag, delete MP4Delete) ([]byte, 
 	ws := &writerseeker.WriterSeeker{}
 	atoms, err := populateAtoms(r, _tags)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	w := mp4.NewWriter(ws)
 	if _, err = mp4.ReadBoxStructure(r, func(h *mp4.ReadHandle) (interface{}, error) {
@@ -281,9 +281,8 @@ func writeMP4(r *bufseekio.ReadSeeker, _tags *IDTag, delete MP4Delete) ([]byte, 
 			return nil, w.CopyBox(r, &h.BoxInfo)
 		}
 	}); err != nil {
-		return nil, err
+		return err
 	}
-	buffy := ws.Bytes()
-
-	return buffy, nil
+	wo.Write(ws.Bytes())
+	return nil
 }
