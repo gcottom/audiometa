@@ -8,7 +8,7 @@ import (
 )
 
 func TestWriteEmptyTagsMP3(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
+	path, _ := filepath.Abs("../testdata/testdata-mp3-nonEmpty.mp3")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -36,7 +36,7 @@ func TestWriteEmptyTagsMP3(t *testing.T) {
 	}
 }
 func TestWriteTagsMP3FromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
+	path, _ := filepath.Abs("../testdata/testdata-mp3-nonEmpty.mp3")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -81,7 +81,7 @@ func TestWriteTagsMP3FromEmpty(t *testing.T) {
 
 func TestUpdateTagsMP3(t *testing.T) {
 	TestWriteTagsMP3FromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
+	path, _ := filepath.Abs("../testdata/testdata-mp3-nonEmpty.mp3")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -133,7 +133,7 @@ func TestUpdateTagsMP3(t *testing.T) {
 }
 
 func TestWriteEmptyTagsM4A(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-m4a-nonEmpty.m4a")
+	path, _ := filepath.Abs("../testdata/testdata-m4a-nonEmpty.m4a")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -161,7 +161,7 @@ func TestWriteEmptyTagsM4A(t *testing.T) {
 	}
 }
 func TestWriteTagsM4AFromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-m4a-nonEmpty.m4a")
+	path, _ := filepath.Abs("../testdata/testdata-m4a-nonEmpty.m4a")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -205,7 +205,7 @@ func TestWriteTagsM4AFromEmpty(t *testing.T) {
 }
 func TestUpdateTagsM4A(t *testing.T) {
 	TestWriteTagsM4AFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-m4a-nonEmpty.m4a")
+	path, _ := filepath.Abs("../testdata/testdata-m4a-nonEmpty.m4a")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -256,7 +256,7 @@ func TestUpdateTagsM4A(t *testing.T) {
 	}
 }
 func TestWriteEmptyTagsFlac(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-flac-nonEmpty.flac")
+	path, _ := filepath.Abs("../testdata/testdata-flac-nonEmpty.flac")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -284,7 +284,7 @@ func TestWriteEmptyTagsFlac(t *testing.T) {
 	}
 }
 func TestWriteTagsFlacFromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-flac-nonEmpty.flac")
+	path, _ := filepath.Abs("../testdata/testdata-flac-nonEmpty.flac")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -328,7 +328,7 @@ func TestWriteTagsFlacFromEmpty(t *testing.T) {
 }
 func TestUpdateTagsFlac(t *testing.T) {
 	TestWriteTagsFlacFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-flac-nonEmpty.flac")
+	path, _ := filepath.Abs("../testdata/testdata-flac-nonEmpty.flac")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -379,7 +379,7 @@ func TestUpdateTagsFlac(t *testing.T) {
 	}
 }
 func TestWriteEmptyTagsOggVorbis(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-ogg-vorbis-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -407,7 +407,7 @@ func TestWriteEmptyTagsOggVorbis(t *testing.T) {
 	}
 }
 func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-ogg-vorbis-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -433,7 +433,7 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
+	tag.SetAlbumArtFromFilePath("../testdata/testdata-img-1.jpg")
 	tag.filePath = path
 	buffy = new(bytes.Buffer)
 	if err = SaveTag(tag, buffy); err != nil {
@@ -451,7 +451,7 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	}
 }
 func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-ogg-vorbis-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -477,7 +477,7 @@ func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
+	tag.SetAlbumArtFromFilePath("../testdata/testdata-img-1.jpg")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
 	tag.filePath = path
@@ -501,7 +501,7 @@ func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
 }
 func TestUpdateTagsOggVorbis(t *testing.T) {
 	TestWriteTagsOggVorbisFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-ogg-vorbis-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -553,7 +553,7 @@ func TestUpdateTagsOggVorbis(t *testing.T) {
 }
 func TestUpdateTagsOggVorbisExtended(t *testing.T) {
 	TestWriteTagsOggVorbisFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-ogg-vorbis-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -610,7 +610,7 @@ func TestUpdateTagsOggVorbisExtended(t *testing.T) {
 	}
 }
 func TestWriteEmptyTagsOggOpus(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-opus-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -638,7 +638,7 @@ func TestWriteEmptyTagsOggOpus(t *testing.T) {
 	}
 }
 func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-opus-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -664,7 +664,7 @@ func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
+	tag.SetAlbumArtFromFilePath("../testdata/testdata-img-1.jpg")
 	tag.filePath = path
 	buffy = new(bytes.Buffer)
 	if err = SaveTag(tag, buffy); err != nil {
@@ -682,7 +682,7 @@ func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 	}
 }
 func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-opus-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -708,7 +708,7 @@ func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
+	tag.SetAlbumArtFromFilePath("../testdata/testdata-img-1.jpg")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
 	tag.filePath = path
@@ -732,7 +732,7 @@ func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
 }
 func TestUpdateTagsOggOpus(t *testing.T) {
 	TestWriteTagsOggOpusFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-opus-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -784,7 +784,7 @@ func TestUpdateTagsOggOpus(t *testing.T) {
 }
 func TestUpdateTagsOggOpusExtended(t *testing.T) {
 	TestWriteTagsOggOpusFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-opus-nonEmpty.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")

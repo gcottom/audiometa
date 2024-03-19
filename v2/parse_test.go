@@ -7,7 +7,7 @@ import (
 )
 
 func TestReadMP3Tags(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-mp3.mp3")
+	path, _ := filepath.Abs("../testdata/testdata-mp3.mp3")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -22,7 +22,7 @@ func TestReadMP3Tags(t *testing.T) {
 
 }
 func TestReadM4ATags(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-m4a.m4a")
+	path, _ := filepath.Abs("../testdata/testdata-m4a.m4a")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -36,7 +36,7 @@ func TestReadM4ATags(t *testing.T) {
 	}
 }
 func TestReadFlacTags(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-flac.flac")
+	path, _ := filepath.Abs("../testdata/testdata-flac.flac")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -50,7 +50,7 @@ func TestReadFlacTags(t *testing.T) {
 	}
 }
 func TestReadOggVorbisTags(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-ogg.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-ogg.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
@@ -64,7 +64,7 @@ func TestReadOggVorbisTags(t *testing.T) {
 	}
 }
 func TestReadOggOpusTags(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-opus.ogg")
+	path, _ := filepath.Abs("../testdata/testdata-opus.ogg")
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal("Error opening file!")
