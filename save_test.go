@@ -1,22 +1,33 @@
 package audiometa
 
 import (
+	"bytes"
+	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestWriteEmptyTagsMP3(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -26,27 +37,40 @@ func TestWriteEmptyTagsMP3(t *testing.T) {
 }
 func TestWriteTagsMP3FromEmpty(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -58,32 +82,48 @@ func TestWriteTagsMP3FromEmpty(t *testing.T) {
 func TestUpdateTagsMP3(t *testing.T) {
 	TestWriteTagsMP3FromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
+
+	WriteFile(path, buffy.Bytes())
 	tag.SetArtist("TestArtist2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{MP3})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -94,16 +134,25 @@ func TestUpdateTagsMP3(t *testing.T) {
 
 func TestWriteEmptyTagsM4A(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-m4a-nonEmpty.m4a")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
+	tag.filePath = path
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -113,27 +162,40 @@ func TestWriteEmptyTagsM4A(t *testing.T) {
 }
 func TestWriteTagsM4AFromEmpty(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-m4a-nonEmpty.m4a")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -144,32 +206,48 @@ func TestWriteTagsM4AFromEmpty(t *testing.T) {
 func TestUpdateTagsM4A(t *testing.T) {
 	TestWriteTagsM4AFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-m4a-nonEmpty.m4a")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
+
+	WriteFile(path, buffy.Bytes())
 	tag.SetArtist("TestArtist2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{M4A})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -179,17 +257,25 @@ func TestUpdateTagsM4A(t *testing.T) {
 }
 func TestWriteEmptyTagsFlac(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-flac-nonEmpty.flac")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Log(err)
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -199,27 +285,40 @@ func TestWriteEmptyTagsFlac(t *testing.T) {
 }
 func TestWriteTagsFlacFromEmpty(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-flac-nonEmpty.flac")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -230,32 +329,48 @@ func TestWriteTagsFlacFromEmpty(t *testing.T) {
 func TestUpdateTagsFlac(t *testing.T) {
 	TestWriteTagsFlacFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-flac-nonEmpty.flac")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
+
+	WriteFile(path, buffy.Bytes())
 	tag.SetArtist("TestArtist2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{FLAC})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -265,17 +380,25 @@ func TestUpdateTagsFlac(t *testing.T) {
 }
 func TestWriteEmptyTagsOggVorbis(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Log(err)
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -285,16 +408,25 @@ func TestWriteEmptyTagsOggVorbis(t *testing.T) {
 }
 func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -302,11 +434,15 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -316,16 +452,25 @@ func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
 }
 func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -335,11 +480,15 @@ func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -353,32 +502,48 @@ func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
 func TestUpdateTagsOggVorbis(t *testing.T) {
 	TestWriteTagsOggVorbisFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
+
+	WriteFile(path, buffy.Bytes())
 	tag.SetArtist("TestArtist2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -389,16 +554,25 @@ func TestUpdateTagsOggVorbis(t *testing.T) {
 func TestUpdateTagsOggVorbisExtended(t *testing.T) {
 	TestWriteTagsOggVorbisFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -407,17 +581,24 @@ func TestUpdateTagsOggVorbisExtended(t *testing.T) {
 	tag.SetAlbum("TestAlbum1")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
+
+	WriteFile(path, buffy.Bytes())
 	tag.SetArtist("TestArtist2")
 	tag.SetAdditionalTag("TEST", "TEST3")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -430,17 +611,25 @@ func TestUpdateTagsOggVorbisExtended(t *testing.T) {
 }
 func TestWriteEmptyTagsOggOpus(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Log(err)
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -450,16 +639,25 @@ func TestWriteEmptyTagsOggOpus(t *testing.T) {
 }
 func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -467,11 +665,15 @@ func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -481,16 +683,25 @@ func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
 }
 func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
 	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -500,11 +711,15 @@ func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
 	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -518,32 +733,48 @@ func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
 func TestUpdateTagsOggOpus(t *testing.T) {
 	TestWriteTagsOggOpusFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.SetArtist("TestArtist1")
 	tag.SetTitle("TestTitle1")
 	tag.SetAlbum("TestAlbum1")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
+
+	WriteFile(path, buffy.Bytes())
 	tag.SetArtist("TestArtist2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -554,16 +785,25 @@ func TestUpdateTagsOggOpus(t *testing.T) {
 func TestUpdateTagsOggOpusExtended(t *testing.T) {
 	TestWriteTagsOggOpusFromEmpty(t)
 	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	tag, err := parse(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal("Error opening file!")
+	}
+	f.Seek(0, 0)
+	tag, err := parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
 	tag.ClearAllTags()
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy := new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}
@@ -572,17 +812,24 @@ func TestUpdateTagsOggOpusExtended(t *testing.T) {
 	tag.SetAlbum("TestAlbum1")
 	tag.SetAdditionalTag("TEST", "TEST")
 	tag.SetAdditionalTag("TEST2", "TEST2")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
+
+	WriteFile(path, buffy.Bytes())
 	tag.SetArtist("TestArtist2")
 	tag.SetAdditionalTag("TEST", "TEST3")
-	err = SaveTag(tag)
-	if err != nil {
-		t.Fatal("Error saving!")
+	tag.filePath = path
+	buffy = new(bytes.Buffer)
+	if err = SaveTag(tag, buffy); err != nil {
+		t.Fatal("error saving")
 	}
-	tag, err = parse(path)
+
+	WriteFile(path, buffy.Bytes())
+	f.Seek(0, 0)
+	tag, err = parse(f, ParseOptions{OGG})
 	if err != nil {
 		t.Fatal("Error parsing!")
 	}

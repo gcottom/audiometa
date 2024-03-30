@@ -1,39 +1,67 @@
 package audiometa
 
 import (
-	"github.com/go-flac/flacvorbis"
-	"github.com/go-flac/go-flac"
+	"bytes"
+	"image"
+	"io"
+
+	"github.com/gcottom/audiometa/v2/flac"
 )
 
-func extractFLACComment(fileName string) (*flacvorbis.MetaDataBlockVorbisComment, int, error) {
-	f, err := flac.ParseFile(fileName)
-	if err != nil {
-		return nil, 0, err
-	}
+type flacBlock struct {
+	cmts   *flac.MetaDataBlockVorbisComment
+	pic    *image.Image
+	picIdx int
+	cmtIdx int
+}
 
-	var cmt *flacvorbis.MetaDataBlockVorbisComment
-	var cmtIdx int
+func extractFLACComment(input io.Reader) (*flac.File, *flacBlock, error) {
+	fb := flacBlock{}
+	f, err := flac.ParseMetadata(input)
+	if err != nil {
+		return nil, nil, err
+	}
 	for idx, meta := range f.Meta {
 		if meta.Type == flac.VorbisComment {
-			cmt, err = flacvorbis.ParseFromMetaDataBlock(*meta)
-			cmtIdx = idx
+			fb.cmts, err = flac.ParseFromMetaDataBlock(*meta)
+			fb.cmtIdx = idx
 			if err != nil {
-				return nil, 0, err
+				return nil, nil, err
+			}
+			continue
+		} else if meta.Type == flac.Picture {
+			if pic, err := flac.ParsePicFromMetaDataBlock(*meta); err == nil {
+				if pic != nil {
+					if img, _, err := image.Decode(bytes.NewReader(pic.ImageData)); err == nil {
+						fb.pic = &img
+						fb.picIdx = idx
+					}
+				}
+				continue
 			}
 		}
 	}
-	return cmt, cmtIdx, nil
+
+	return f, &fb, nil
 }
-func getFLACPictureIndex(metaIn []*flac.MetaDataBlock) int {
-	var cmtIdx = 0
-	for idx, meta := range metaIn {
-		if meta.Type == flac.Picture {
-			cmtIdx = idx
-			break
-		}
-	}
-	return cmtIdx
-}
+
 func removeFLACMetaBlock(slice []*flac.MetaDataBlock, s int) []*flac.MetaDataBlock {
 	return append(slice[:s], slice[s+1:]...)
+}
+
+func flacSave(r io.Reader, w io.Writer, m []*flac.MetaDataBlock) error {
+	if _, err := w.Write([]byte("fLaC")); err != nil {
+		return err
+	}
+	for i, meta := range m {
+		last := i == len(m)-1
+		if _, err := w.Write(meta.Marshal(last)); err != nil {
+			return err
+		}
+	}
+	if _, err := io.Copy(w, r); err != nil {
+		return err
+	}
+	return nil
+
 }

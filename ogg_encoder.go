@@ -92,7 +92,7 @@ func (w *oggEncoder) writePage(h *oggPageHeader, segtbl []byte, pay payload) err
 
 	bb := hb.Bytes()
 	crc := crc32(bb)
-	_ = binary.Write(bytes.NewBuffer(bb[22:22:26]), byteOrder, crc)
+	_ = binary.Write(bytes.NewBuffer(bb[0:22:26]), byteOrder, crc)
 
 	_, err := hb.WriteTo(w.w)
 	return err
