@@ -9,13 +9,13 @@ import (
 )
 
 // GetFileType returns the file type of the file pointed to by filepath. If the filetype is not supported, an error is returned.
-func GetFileType(filepath string) (FileType, error) {
+func GetFileType(filepath string) (string, error) {
 	sp := strings.Split(filepath, ".")
 	if len(sp) < 2 {
 		return "", errors.New("unsupported file extension or no extension")
 	}
 	for _, ft := range supportedFileTypes {
-		if strings.ToLower(sp[len(sp)-1]) == string(ft) {
+		if strings.ToLower(sp[len(sp)-1]) == ft {
 			return ft, nil
 		}
 	}
@@ -86,13 +86,4 @@ func encodeUint32(n uint32) []byte {
 		panic(err)
 	}
 	return buf.Bytes()
-}
-
-func fileTypesContains(v FileType, a []FileType) bool {
-	for _, i := range a {
-		if i == v {
-			return true
-		}
-	}
-	return false
 }

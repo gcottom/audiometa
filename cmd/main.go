@@ -22,7 +22,7 @@ func main() {
 		mode = strings.ToLower(args[0])
 		if len(args)%2 == 0 && len(args) != 1 {
 			if mode == "p" || mode == "parse" || mode == "r" || mode == "read" || mode == "-p" || mode == "-parse" || mode == "-r" || mode == "-read" {
-				tag, err := audiometa.OpenTagFromPath(file)
+				tag, err := audiometa.OpenTag(file)
 				if err != nil {
 					panic(err)
 				}
@@ -108,7 +108,7 @@ func main() {
 				}
 			} else if mode == "s" || mode == "w" || mode == "save" || mode == "write" || mode == "-s" || mode == "-w" || mode == "-save" || mode == "-write" {
 				if len(args) > 2 {
-					tag, err := audiometa.OpenTagFromPath(file)
+					tag, err := audiometa.OpenTag(file)
 					if err != nil {
 						panic(err)
 					}
@@ -154,7 +154,7 @@ func main() {
 				}
 
 			} else if mode == "c" || mode == "clear" || mode == "e" || mode == "empty" || mode == "-c" || mode == "-clear" || mode == "-e" || mode == "-empty" {
-				tag, err := audiometa.OpenTagFromPath(file)
+				tag, err := audiometa.OpenTag(file)
 				if err != nil {
 					panic(err)
 				}

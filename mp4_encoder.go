@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"image/png"
-	"io"
+	"os"
 	"reflect"
 	"strings"
 
@@ -45,7 +45,7 @@ func mp4copy(w *mp4.Writer, h *mp4.ReadHandle) error {
 }
 
 // See which atoms don't already exist and will need creating.
-func populateAtoms(f io.ReadSeeker, _tags *IDTag) (map[string]bool, error) {
+func populateAtoms(f *os.File, _tags *IDTag) (map[string]bool, error) {
 	ilst, err := mp4.ExtractBox(
 		f, nil, mp4.BoxPath{mp4.BoxTypeMoov(), mp4.BoxTypeUdta(), mp4.BoxTypeMeta(), mp4.BoxTypeIlst()})
 	if err != nil {
@@ -234,18 +234,24 @@ func getAtomsList() []mp4.BoxType {
 	return atomsList
 }
 
-func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Delete) error {
+func writeMP4(trackPath string, _tags *IDTag, delete MP4Delete) error {
 	var currentKey string
 	ctx := mp4.Context{UnderIlstMeta: true}
 	atomsList := getAtomsList()
+	outFile, err := os.OpenFile(trackPath, os.O_RDONLY, 0755)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
 
 	ws := &writerseeker.WriterSeeker{}
-	atoms, err := populateAtoms(r, _tags)
+	r := bufseekio.NewReadSeeker(outFile, 128*1024, 4)
+	atoms, err := populateAtoms(outFile, _tags)
 	if err != nil {
 		return err
 	}
 	w := mp4.NewWriter(ws)
-	if _, err = mp4.ReadBoxStructure(r, func(h *mp4.ReadHandle) (interface{}, error) {
+	_, err = mp4.ReadBoxStructure(r, func(h *mp4.ReadHandle) (interface{}, error) {
 		switch h.BoxInfo.Type {
 		case mp4.BoxTypeMoov(), mp4.BoxTypeUdta(), mp4.BoxTypeMeta():
 			err := mp4copy(w, h)
@@ -280,9 +286,18 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 		default:
 			return nil, w.CopyBox(r, &h.BoxInfo)
 		}
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
-	wo.Write(ws.Bytes())
+	outFile.Close()
+	file, err := os.OpenFile(trackPath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err = file.Write(ws.Bytes()); err != nil {
+		return err
+	}
 	return nil
 }

@@ -2,7 +2,6 @@ package audiometa
 
 import (
 	"image"
-	"io"
 )
 
 // The IDTag represents all of the metadata that can be retrieved from a file.
@@ -32,27 +31,19 @@ type IDTag struct {
 	partOfSet    string       //Part of a set
 	publisher    string       //Publisher
 
-	reader io.ReadSeeker
-
 	PassThrough map[string]string
-}
-
-type ParseOptions struct {
-	Format FileType
 }
 
 type MP4Delete []string
 
-type FileType string
-
 const (
-	MP3  FileType = "mp3"
-	M4P  FileType = "m4p"
-	M4A  FileType = "m4a"
-	M4B  FileType = "m4b"
-	MP4  FileType = "mp4"
-	FLAC FileType = "flac"
-	OGG  FileType = "ogg"
+	MP3  string = "mp3"
+	M4P  string = "m4p"
+	M4A  string = "m4a"
+	M4B  string = "m4b"
+	MP4  string = "mp4"
+	FLAC string = "flac"
+	OGG  string = "ogg"
 )
 
 const (
@@ -85,5 +76,4 @@ var mp3TextFrames = map[string]string{
 	"albumArt":     "APIC",
 }
 
-var supportedFileTypes = []FileType{MP3, M4P, M4A, M4B, MP4, FLAC, OGG}
-var mp4FileTypes = []FileType{M4P, M4A, M4B, MP4}
+var supportedFileTypes = []string{MP3, M4P, M4A, M4B, MP4, FLAC, OGG}

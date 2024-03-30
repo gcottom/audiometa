@@ -3,27 +3,18 @@ package audiometa
 import (
 	"bytes"
 	"image"
-	"io"
 	"os"
 )
 
-// OpenTagFromPath Opens the ID tag for the corresponding file as long as it is a supported filetype
-// Use the OpenTagFromPath command and you will be able to access all metadata associated with the file
-func OpenTagFromPath(filepath string) (*IDTag, error) {
-	file, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-	return parse(file, ParseOptions{})
-}
-
-func Open(r io.ReadSeeker, p ParseOptions) (*IDTag, error) {
-	return parse(r, p)
+// OpenTag Opens the ID tag for the corresponding file as long as it is a supported filetype
+// Use the OpenTag command and you will be able to access all metadata associated with the file
+func OpenTag(filepath string) (*IDTag, error) {
+	return parse(filepath)
 }
 
 // SaveTag saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
-func SaveTag(tag *IDTag, w io.Writer) error {
-	return tag.Save(w)
+func SaveTag(tag *IDTag) error {
+	return tag.Save()
 }
 
 // ClearAllTags clears all tags except the fileUrl tag which is used to reference the file, takes an optional parameter "preserveUnkown": when this is true passThroughMap is not cleared and unknown tags are preserved

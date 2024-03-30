@@ -9,9 +9,8 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
+	"os"
 	"strings"
-
-	"github.com/sunfish-shogi/bufseekio"
 )
 
 var (
@@ -293,13 +292,19 @@ func (m *metadataVorbis) readPictureBlock(r io.Reader) error {
 }
 
 // Clears the comment header in an ogg OPUS file and writes an empty comment header
-func clearTagsOpus(input io.Reader, w io.Writer) error {
-	decoder := newOggDecoder(input)
+func clearTagsOpus(path string) error {
+	inputFile, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+	decoder := newOggDecoder(inputFile)
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return err
 	}
-	encoder := newOggEncoder(page.Serial, w)
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
 	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
 		return err
 	}
@@ -356,23 +361,40 @@ func clearTagsOpus(input io.Reader, w io.Writer) error {
 			}
 		}
 	}
+	inputFile.Close()
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Saves the tags for an ogg Opus file
-func saveOpusTags(tag *IDTag, w io.Writer) error {
+func saveOpusTags(tag *IDTag) error {
 	// Step 1: Clear existing tags from the file
-	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
+	if err := clearTagsOpus(tag.filePath); err != nil {
+		return err
+	}
 
 	// Step 2: Open the input file and create an Ogg decoder
-	decoder := newOggDecoder(r)
+	inputFile, err := os.Open(tag.filePath)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+	decoder := newOggDecoder(inputFile)
 	page, err := decoder.decodeOgg()
 	if err != nil {
-		return nil
+		return err
 	}
-	encoder := newOggEncoder(page.Serial, w)
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
 	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
-		return nil
+		return err
 	}
 	var vorbisCommentPage *oggPage
 	for {
@@ -381,7 +403,7 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 			if err == io.EOF {
 				break // Reached the end of the input Ogg stream
 			}
-			return nil
+			return err
 		}
 
 		// Find the Vorbis comment page and store it
@@ -440,33 +462,48 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 
 			// Step 6: Write the updated Vorbis comment page to the output file
 			if err = encoder.encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets); err != nil {
-				return nil
+				return err
 			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
 			if page.Type == EOS {
 				if err = encoder.encodeEOS(page.Granule, page.Packets); err != nil {
-					return nil
-				} else {
-					if err = encoder.encode(page.Granule, page.Packets); err != nil {
-						return nil
-					}
+					return err
+				}
+			} else {
+				if err = encoder.encode(page.Granule, page.Packets); err != nil {
+					return err
 				}
 			}
 		}
-		// Step 7: Close and rename the files to the original file
+	}
+	// Step 7: Close and rename the files to the original file
+	inputFile.Close()
+	file, err := os.OpenFile(tag.filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
+		return err
 	}
 	return nil
 }
 
 // Clears the vorbis comment header and writes an empty comment header
-func clearTagsVorbis(input io.Reader, w io.Writer) error {
-	decoder := newOggDecoder(input)
+func clearTagsVorbis(path string) error {
+	inputFile, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+	decoder := newOggDecoder(inputFile)
 	page, err := decoder.decodeOgg()
 	if err != nil {
 		return err
 	}
-	encoder := newOggEncoder(page.Serial, w)
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
 	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
 		return err
 	}
@@ -523,23 +560,40 @@ func clearTagsVorbis(input io.Reader, w io.Writer) error {
 			}
 		}
 	}
+	inputFile.Close()
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Saves the given tag structure to a ogg vorbis audio file
-func saveVorbisTags(tag *IDTag, w io.Writer) error {
-	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
+func saveVorbisTags(tag *IDTag) error {
 	// Step 1: Clear existing tags from the file
+	if err := clearTagsVorbis(tag.filePath); err != nil {
+		return err
+	}
 
 	// Step 2: Open the input file and create an Ogg decoder
-	decoder := newOggDecoder(r)
+	inputFile, err := os.Open(tag.filePath)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+	decoder := newOggDecoder(inputFile)
 	page, err := decoder.decodeOgg()
 	if err != nil {
-		return nil
+		return err
 	}
-	encoder := newOggEncoder(page.Serial, w)
+	bb := new(bytes.Buffer)
+	encoder := newOggEncoder(page.Serial, bb)
 	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
-		return nil
+		return err
 	}
 	var vorbisCommentPage *oggPage
 	for {
@@ -548,7 +602,7 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 			if err == io.EOF {
 				break // Reached the end of the input Ogg stream
 			}
-			return nil
+			return err
 		}
 
 		// Find the Vorbis comment page and store it
@@ -606,20 +660,30 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 
 			// Step 6: Write the updated Vorbis comment page to the output file
 			if err = encoder.encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets); err != nil {
-				return nil
+				return err
 			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
 			if page.Type == EOS {
 				if err = encoder.encodeEOS(page.Granule, page.Packets); err != nil {
-					return nil
+					return err
 				}
 			} else {
 				if err = encoder.encode(page.Granule, page.Packets); err != nil {
-					return nil
+					return err
 				}
 			}
 		}
+	}
+	// Step 7: Close and rename the files to the original file
+	inputFile.Close()
+	file, err := os.OpenFile(tag.filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err = file.Write(bb.Bytes()); err != nil {
+		return err
 	}
 	return nil
 }
