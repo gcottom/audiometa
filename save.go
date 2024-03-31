@@ -2,10 +2,9 @@ package audiometa
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"image/jpeg"
 	"io"
+	"os"
 	"reflect"
 
 	mp3TagLib "github.com/bogem/id3v2/v2"
@@ -15,10 +14,7 @@ import (
 
 // Save saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
 func (tag *IDTag) Save(w io.Writer) error {
-	fileType, err := GetFileType(tag.filePath)
-	if err != nil {
-		return err
-	}
+	fileType := FileType(tag.fileType)
 	if _, err := tag.reader.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
@@ -31,7 +27,7 @@ func (tag *IDTag) Save(w io.Writer) error {
 	} else if fileType == OGG {
 		return saveOGG(tag, w)
 	}
-	return fmt.Errorf("no method available for filetype:%s", tag.fileType)
+	return ErrNoMethodAvlble
 }
 
 func saveMP3(tag *IDTag, w io.Writer) error {
@@ -71,6 +67,40 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 	if err != nil {
 		return err
 	}
+
+	if reflect.TypeOf(r) == reflect.TypeOf(new(os.File)) &&
+		reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) &&
+		r.(*os.File).Name() == w.(*os.File).Name() {
+		//in and out are the same file so we have to temp it
+		t, err := os.Create("temp")
+		if err != nil {
+			return err
+		}
+		defer t.Close()
+		defer os.Remove(t.Name())
+		// Write tag in new file.
+		if _, err = mp3Tag.WriteTo(t); err != nil {
+			return err
+		}
+		// Seek to a music part of original file.
+		if _, err = r.Seek(originalSize, io.SeekStart); err != nil {
+			return err
+		}
+		// Write to new file the music part.
+		buf := getByteSlice(128 * 1024)
+		defer putByteSlice(buf)
+		if _, err = io.CopyBuffer(t, r, buf); err != nil {
+			return err
+		}
+		if _, err = t.Seek(0, io.SeekStart); err != nil {
+			return err
+		}
+		if _, err = io.CopyBuffer(w, t, buf); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	// Write tag in new file.
 	if _, err = mp3Tag.WriteTo(w); err != nil {
 		return err
@@ -111,6 +141,9 @@ func saveMP4(tag *IDTag, w io.Writer) error {
 }
 
 func saveFLAC(tag *IDTag, w io.Writer) error {
+	needsTemp := reflect.TypeOf(tag.reader) == reflect.TypeOf(new(os.File)) &&
+		reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) &&
+		tag.reader.(*os.File).Name() == w.(*os.File).Name()
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	f, fb, err := extractFLACComment(r)
 	if err != nil {
@@ -151,7 +184,8 @@ func saveFLAC(tag *IDTag, w io.Writer) error {
 		}
 
 	}
-	return flacSave(r, w, f.Meta)
+	r.Seek(0, io.SeekStart)
+	return flacSave(r, w, f.Meta, needsTemp)
 }
 
 func saveOGG(tag *IDTag, w io.Writer) error {
@@ -160,5 +194,5 @@ func saveOGG(tag *IDTag, w io.Writer) error {
 	} else if tag.codec == "opus" {
 		return saveOpusTags(tag, w)
 	}
-	return errors.New("codec not supported for OGG")
+	return ErrOggCodecNotSpprtd
 }

@@ -3,7 +3,6 @@ package audiometa
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"strconv"
 )
@@ -39,7 +38,7 @@ type oggPage struct {
 }
 
 // errBadSegs error is thrown when an attempt is made to decode a page with a segment table size less than 1.
-var errBadSegs = errors.New("invalid segment table size")
+var errBadSegs = ErrOggInvalidSgmtTblSz
 
 // ErrBadCrc error occurs when the CRC field in an ogg page doesn't match the CRC calculated by the Decoder.
 type errBadCrc struct {

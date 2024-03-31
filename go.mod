@@ -6,6 +6,7 @@ require (
 	github.com/abema/go-mp4 v1.2.0
 	github.com/aler9/writerseeker v1.1.0
 	github.com/bogem/id3v2/v2 v2.1.4
+	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/sunfish-shogi/bufseekio v0.1.0
 )
 

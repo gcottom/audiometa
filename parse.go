@@ -2,7 +2,6 @@ package audiometa
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"io"
 	"reflect"
@@ -25,6 +24,7 @@ func parse(input io.ReadSeeker, opts ParseOptions) (*IDTag, error) {
 		if err != nil {
 			return nil, err
 		}
+		tag.fileType = "mp3"
 		tag.reader = input
 		return tag, nil
 	case fileTypesContains(format, mp4FileTypes):
@@ -33,6 +33,7 @@ func parse(input io.ReadSeeker, opts ParseOptions) (*IDTag, error) {
 			return nil, err
 		}
 		tag.reader = input
+		tag.fileType = "mp4"
 		return tag, nil
 	case format == FLAC:
 		tag, err := parseFLAC(input)
@@ -40,23 +41,25 @@ func parse(input io.ReadSeeker, opts ParseOptions) (*IDTag, error) {
 			return nil, err
 		}
 		tag.reader = input
+		tag.fileType = "flac"
 		return tag, nil
 	case format == OGG:
 		tag, err := parseOGG(input)
 		if err != nil {
 			return nil, err
 		}
+		tag.fileType = "ogg"
 		tag.reader = input
 		return tag, nil
 	}
-	return nil, fmt.Errorf("no method available for filetype: %s", format)
+	return nil, ErrNoMethodAvlble
 }
 
 func parseMP3(input io.Reader) (*IDTag, error) {
 	resultTag := IDTag{}
 	tag, err := mp3TagLib.ParseReader(input, mp3TagLib.Options{Parse: true})
 	if err != nil {
-		return nil, fmt.Errorf("error opening mp3 [%w]", err)
+		return nil, ErrMP3ParseFail
 	}
 	resultTag = IDTag{artist: tag.Artist(), album: tag.Album(), genre: tag.Genre(), title: tag.Title(), year: tag.Year()}
 	rtPtr := reflect.ValueOf(&resultTag)

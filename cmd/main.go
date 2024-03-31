@@ -148,9 +148,16 @@ func main() {
 							}
 						}
 					}
-					/*if err = tag.Save(); err != nil {
-						fmt.Println(err)
-					}*/
+					f, err := os.OpenFile(file, os.O_WRONLY, os.ModePerm)
+					if err != nil {
+						panic(err)
+					}
+
+					err = tag.Save(f)
+					if err != nil {
+						panic(err)
+					}
+					return
 				}
 
 			} else if mode == "c" || mode == "clear" || mode == "e" || mode == "empty" || mode == "-c" || mode == "-clear" || mode == "-e" || mode == "-empty" {
@@ -158,11 +165,16 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
-				tag.ClearAllTags(false)
-				/*err = tag.Save()
+				f, err := os.Open(file)
 				if err != nil {
-					fmt.Println(err)
-				}*/
+					panic(err)
+				}
+				tag.ClearAllTags(false)
+
+				err = tag.Save(f)
+				if err != nil {
+					panic(err)
+				}
 
 			} else if mode == "h" || mode == "-h" || mode == "-help" || mode == "help" {
 				if args[1] == "r" || args[1] == "p" || args[1] == "parse" || args[1] == "read" {

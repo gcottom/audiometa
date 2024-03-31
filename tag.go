@@ -14,7 +14,11 @@ func OpenTagFromPath(filepath string) (*IDTag, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parse(file, ParseOptions{})
+	f, err := GetFileType(filepath)
+	if err != nil {
+		return nil, err
+	}
+	return parse(file, ParseOptions{f})
 }
 
 func Open(r io.ReadSeeker, p ParseOptions) (*IDTag, error) {
@@ -42,7 +46,6 @@ func (tag *IDTag) ClearAllTags(preserveUnknown ...bool) {
 	tag.date = ""
 	tag.encodedBy = ""
 	tag.lyricist = ""
-	tag.fileType = ""
 	tag.language = ""
 	tag.length = ""
 	tag.partOfSet = ""

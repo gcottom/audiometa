@@ -2,7 +2,6 @@ package audiometa
 
 import (
 	"bytes"
-	"errors"
 	"image/png"
 	"io"
 	"reflect"
@@ -52,7 +51,7 @@ func populateAtoms(f io.ReadSeeker, _tags *IDTag) (map[string]bool, error) {
 		return nil, err
 	}
 	if len(ilst) == 0 {
-		return nil, errors.New("ilst atom is missing")
+		return nil, ErrMP4IlstAtomMissing
 	}
 	atoms := map[string]bool{}
 	fields := reflect.VisibleFields(reflect.TypeOf(*_tags))

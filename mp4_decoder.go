@@ -3,8 +3,6 @@ package audiometa
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
-	"fmt"
 	"image"
 	"io"
 	"strconv"
@@ -88,7 +86,6 @@ func (m metadataMP4) readAtoms(r io.ReadSeeker) error {
 
 		switch name {
 		case "meta":
-			// next_item_id (int32)
 			_, err := readBytes(r, 4)
 			if err != nil {
 				return err
@@ -142,33 +139,33 @@ func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, pro
 			return err
 		}
 		if len(b) < 8 {
-			return fmt.Errorf("invalid encoding: expected at least %d bytes, got %d", 8, len(b))
+			return ErrMP4InvalidEncoding
 		}
 
 		// "data" + size (4 bytes each)
 		b = b[8:]
 
 		if len(b) < 4 {
-			return fmt.Errorf("invalid encoding: expected at least %d bytes, for class, got %d", 4, len(b))
+			return ErrMP4InvalidEncoding
 		}
 		class := getInt(b[1:4])
 		var ok bool
 		contentType, ok = atomTypes[class]
 		if !ok {
-			return fmt.Errorf("invalid content type: %v (%x) (%x)", class, b[1:4], b)
+			return ErrMP4InvalidCntntType
 		}
 
 		// 4: atom version (1 byte) + atom flags (3 bytes)
 		// 4: NULL (usually locale indicator)
 		if len(b) < 8 {
-			return fmt.Errorf("invalid encoding: expected at least %d bytes, for atom version and flags, got %d", 8, len(b))
+			return ErrMP4InvalidEncoding
 		}
 		b = b[8:]
 	}
 
 	if name == "trkn" || name == "disk" {
 		if len(b) < 6 {
-			return fmt.Errorf("invalid encoding: expected at least %d bytes, for track and disk numbers, got %d", 6, len(b))
+			return ErrMP4InvalidEncoding
 		}
 
 		m.data[name] = int(b[3])
@@ -181,7 +178,6 @@ func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, pro
 			if bytes.HasPrefix(b, pngHeader) {
 				contentType = "png"
 			}
-			// TODO(dhowden): Detect JPEG formats too (harder).
 		}
 	}
 
@@ -189,7 +185,7 @@ func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, pro
 	switch contentType {
 	case "implicit":
 		if _, ok := atoms[name]; ok {
-			return fmt.Errorf("unhandled implicit content type for required atom: %q", name)
+			return ErrMP4InvalidCntntType
 		}
 		return nil
 
@@ -198,7 +194,7 @@ func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, pro
 
 	case "uint8":
 		if len(b) < 1 {
-			return fmt.Errorf("invalid encoding: expected at least %d bytes, for integer tag data, got %d", 1, len(b))
+			return ErrMP4InvalidEncoding
 		}
 		data = getInt(b[:1])
 
@@ -240,7 +236,7 @@ func readCustomAtom(r io.ReadSeeker, size uint32) (_ string, data []string, _ er
 		if size >= subSize {
 			size -= subSize
 		} else {
-			return "", nil, errors.New("--- invalid size")
+			return "", nil, ErrMP4InvalidAtomSize
 		}
 
 		b, err := readBytes(r, uint(subSize-8))
@@ -249,7 +245,7 @@ func readCustomAtom(r io.ReadSeeker, size uint32) (_ string, data []string, _ er
 		}
 
 		if len(b) < 4 {
-			return "", nil, fmt.Errorf("invalid encoding: expected at least %d bytes, got %d", 4, len(b))
+			return "", nil, ErrMP4InvalidEncoding
 		}
 		switch subName {
 		case "mean", "name":
@@ -261,7 +257,7 @@ func readCustomAtom(r io.ReadSeeker, size uint32) (_ string, data []string, _ er
 
 	// there should remain only the header size
 	if size != 8 {
-		err := errors.New("---- atom out of bounds")
+		err := ErrMP4AtomOutOfBounds
 		return "", nil, err
 	}
 
@@ -346,6 +342,7 @@ func (m metadataMP4) tempo() int {
 func (m metadataMP4) encoder() string {
 	return m.getString(atoms.name("encoder"))
 }
+
 func (m metadataMP4) copyright() string {
 	return m.getString(atoms.name("copyright"))
 }
