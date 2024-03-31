@@ -5,6 +5,8 @@ import (
 	"io"
 )
 
+type FrameData []byte
+
 // StreamInfoBlock represents the undecoded data of StreamInfo block
 type StreamInfoBlock struct {
 	// BlockSizeMin The minimum block size (in samples) used in the stream.

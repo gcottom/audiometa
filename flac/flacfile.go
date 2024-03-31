@@ -3,7 +3,6 @@ package flac
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -27,7 +26,7 @@ func (c *File) Marshal() []byte {
 
 // Save encapsulates Marshal and save the file to the file system
 func (c *File) Save(fn string) error {
-	return ioutil.WriteFile(fn, c.Marshal(), 0644)
+	return os.WriteFile(fn, c.Marshal(), 0644)
 }
 
 // ParseMetadata accepts a reader to a FLAC stream and consumes only FLAC metadata

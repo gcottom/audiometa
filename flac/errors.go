@@ -3,14 +3,14 @@ package flac
 import "errors"
 
 var (
-	ErrorNotVorbisComment = errors.New("Not a vorbis comment metadata block")
-	ErrorUnexpEof         = errors.New("Unexpected end of stream")
-	ErrorMalformedComment = errors.New("Malformed comment")
-	ErrorInvalidFieldName = errors.New("Malformed Field Name")
+	ErrorNotVorbisComment = errors.New("not a vorbis comment metadata block")
+	ErrorUnexpEof         = errors.New("unexpected end of stream")
+	ErrorMalformedComment = errors.New("malformed comment")
+	ErrorInvalidFieldName = errors.New("malformed field Name")
 	// ErrorNotPictureMetadataBlock is returned if the metadata provided is not a picture block.
-	ErrorNotPictureMetadataBlock = errors.New("Not a picture metadata block")
+	ErrorNotPictureMetadataBlock = errors.New("not a picture metadata block")
 	// ErrorUnsupportedMIME is returned if the provided image MIME type is unsupported.
-	ErrorUnsupportedMIME = errors.New("Unsupported MIME")
+	ErrorUnsupportedMIME = errors.New("unsupported MIME")
 	// ErrorNoFLACHeader indicates that "fLaC" marker not found at the beginning of the file
 	ErrorNoFLACHeader = errors.New("fLaC head incorrect")
 	// ErrorNoStreamInfo indicates that StreamInfo Metablock not present or is not the first Metablock
