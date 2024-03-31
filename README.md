@@ -11,9 +11,9 @@ This package allows you to parse and write ID tags for mp3, mp4 (m4a, m4b, m4p),
 
 This is the only package available in Go that uses native Go to allow writing of ogg vorbis metadata. As an added bonus I've added support for ogg OPUS as well.
 
-Simply use the OpenTag() function with a string file path as the argument and the library will return the IDTag.
-
 You can access all of the fields of the IDTag through the accessor functions.
+
+v2 massively improves memory management and speed. Several sections have been rewritten. 
 
 
 Fields that can be parsed:
