@@ -37,6 +37,7 @@ type IDTag struct {
 	PassThrough map[string]string
 }
 
+// ParseOptions is a struct that is passed when parsing a tag. If included, you should set the format to one of the existing FileTypes
 type ParseOptions struct {
 	Format FileType
 }

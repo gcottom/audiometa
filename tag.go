@@ -9,23 +9,30 @@ import (
 
 // OpenTagFromPath Opens the ID tag for the corresponding file as long as it is a supported filetype
 // Use the OpenTagFromPath command and you will be able to access all metadata associated with the file
-func OpenTagFromPath(filepath string) (*IDTag, error) {
+// If you don't pass ParseOptions this function will try to detect the filetype by the extension. If the extension can't be detected an error will occur.
+func OpenTagFromPath(filepath string, p ...ParseOptions) (*IDTag, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
-	f, err := GetFileType(filepath)
-	if err != nil {
-		return nil, err
+	var f FileType
+	if p == nil {
+		f, err = GetFileType(filepath)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		f = p[0].Format
 	}
 	return parse(file, ParseOptions{f})
 }
 
+// Open opens the tag for the passed in reader. It does not have to be a file, it can be a bytes.Reader, or any other interface that implements io.ReadSeeker
 func Open(r io.ReadSeeker, p ParseOptions) (*IDTag, error) {
 	return parse(r, p)
 }
 
-// SaveTag saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
+// SaveTag saves the corresponding IDTag to the supplied io.Writer. It can be a bytes.Buffer, file, etc. If it's the same file as the input, audiometa creates a temp buffer to prevent a read/write circle.
 func SaveTag(tag *IDTag, w io.Writer) error {
 	return tag.Save(w)
 }
