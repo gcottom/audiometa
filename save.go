@@ -2,7 +2,6 @@ package audiometa
 
 import (
 	"bytes"
-	"fmt"
 	"image/jpeg"
 	"io"
 	"os"
@@ -37,11 +36,7 @@ func (tag *IDTag) Save(w io.Writer) error {
 }
 
 func saveMP3(tag *IDTag, w io.Writer) error {
-	b, err := io.ReadAll(tag.reader)
-	if err != nil {
-		return err
-	}
-	r := bytes.NewReader(b)
+	r := tag.reader
 	mp3Tag, err := mp3TagLib.ParseReader(r, mp3TagLib.Options{Parse: true})
 	if err != nil {
 		return err
@@ -93,12 +88,9 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 		//in and out are the same file so we have to temp it
 		t := &writerseeker.WriterSeeker{}
 		// Write tag in new file.
-		if h, err := mp3Tag.WriteTo(t); err != nil {
+		if _, err := mp3Tag.WriteTo(t); err != nil {
 			return err
-		} else {
-			fmt.Printf("header size: %d\n", h)
 		}
-		fmt.Printf("original tag size: %d\n", originalSize)
 		// Seek to a music part of original file.
 		if _, err = r.Seek(originalSize, io.SeekStart); err != nil {
 			return err
@@ -106,20 +98,15 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 		// Write to new file the music part.
 		buf := getByteSlice(128 * 1024)
 		defer putByteSlice(buf)
-		if c, err := io.CopyBuffer(t, r, buf); err != nil {
+		if _, err := io.CopyBuffer(t, r, buf); err != nil {
 			return err
-		} else {
-			fmt.Printf("copied to t: %d\n", c)
 		}
 		if _, err = t.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
-		if c, err := io.CopyBuffer(w2, bytes.NewReader(t.Bytes()), buf); err != nil {
+		if _, err := io.CopyBuffer(w2, bytes.NewReader(t.Bytes()), buf); err != nil {
 			return err
-		} else {
-			fmt.Printf("copied to w: %d\n", c)
 		}
-
 		return nil
 	}
 
@@ -163,9 +150,7 @@ func saveMP4(tag *IDTag, w io.Writer) error {
 }
 
 func saveFLAC(tag *IDTag, w io.Writer) error {
-	needsTemp := reflect.TypeOf(tag.reader) == reflect.TypeOf(new(os.File)) &&
-		reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) &&
-		tag.reader.(*os.File).Name() == w.(*os.File).Name()
+	needsTemp := reflect.TypeOf(w) == reflect.TypeOf(new(os.File))
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	f, fb, err := extractFLACComment(r)
 	if err != nil {

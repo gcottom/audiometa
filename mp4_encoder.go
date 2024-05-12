@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"image/png"
 	"io"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -281,6 +283,22 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 		}
 	}); err != nil {
 		return err
+	}
+
+	if reflect.TypeOf(wo) == reflect.TypeOf(new(os.File)) {
+		defer wo.(*os.File).Close()
+		f := wo.(*os.File)
+		path, err := filepath.Abs(f.Name())
+		if err != nil {
+			return err
+		}
+		w2, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
+			return err
+		}
+		defer w2.Close()
+		w2.Write(ws.Bytes())
+		return nil
 	}
 	wo.Write(ws.Bytes())
 	return nil

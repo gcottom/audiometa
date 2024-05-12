@@ -5,7 +5,9 @@ import (
 	"image"
 	"io"
 	"os"
+	"path/filepath"
 
+	"github.com/aler9/writerseeker"
 	"github.com/gcottom/audiometa/v2/flac"
 )
 
@@ -53,12 +55,7 @@ func removeFLACMetaBlock(slice []*flac.MetaDataBlock, s int) []*flac.MetaDataBlo
 func flacSave(r io.Reader, w io.Writer, m []*flac.MetaDataBlock, needsTemp bool) error {
 	if needsTemp {
 		//in and out are the same file so we have to temp it
-		t, err := os.Create("audiometa-temp")
-		if err != nil {
-			return err
-		}
-		defer t.Close()
-		defer os.Remove(t.Name())
+		t := &writerseeker.WriterSeeker{}
 		// Write tag in new file.
 		if _, err := t.Write([]byte("fLaC")); err != nil {
 			return err
@@ -75,7 +72,18 @@ func flacSave(r io.Reader, w io.Writer, m []*flac.MetaDataBlock, needsTemp bool)
 		if _, err := t.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
-		if _, err = io.Copy(w, t); err != nil {
+		defer w.(*os.File).Close()
+		f := w.(*os.File)
+		path, err := filepath.Abs(f.Name())
+		if err != nil {
+			return err
+		}
+		w2, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
+			return err
+		}
+		defer w2.Close()
+		if _, err := io.Copy(w2, bytes.NewReader(t.Bytes())); err != nil {
 			return err
 		}
 		return nil
