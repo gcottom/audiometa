@@ -6,132 +6,220 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestWriteEmptyTagsMP3(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
+func TestMP3(t *testing.T) {
+	t.Run("TestWriteEmptyTagsMP3-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
+		tag, err := parse(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = parse(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		assert.Empty(t, tag.Artist())
+		assert.Empty(t, tag.Album())
+		assert.Empty(t, tag.Title())
+	})
 
-	tag, err := parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+	t.Run("TestWriteEmptyTagsMP3-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-mp3-nonEmpty.mp3")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-mp3-nonEmpty.mp3", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-mp3-nonEmpty.mp3")
+		f, err := os.OpenFile(path, os.O_RDONLY, 0755)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err := Open(f, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+		f, err = os.OpenFile(path, os.O_RDONLY, 0755)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{MP3})
+		assert.NoError(t, err)
+		f.Close()
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Empty(t, tag.Artist())
+		assert.Empty(t, tag.Album())
+		assert.Empty(t, tag.Title())
+	})
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
-		t.Fatal("Failed to remove tags for empty tag test!")
-	}
-}
-func TestWriteTagsMP3FromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
+	t.Run("TestWriteTagsMP3FromEmpty-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
 
-	tag, err := parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+		tag, err := Open(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-}
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 
-func TestUpdateTagsMP3(t *testing.T) {
-	TestWriteTagsMP3FromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
+	t.Run("TestWriteTagsMP3FromEmpty-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-mp3-nonEmpty.mp3")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-mp3-nonEmpty.mp3", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-mp3-nonEmpty.mp3")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
 
-	tag, err := parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+		tag, err := Open(f, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{MP3})
+		assert.NoError(t, err)
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 
-	tag.SetArtist("TestArtist2")
+	t.Run("TestUpdateTagsMP3-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-mp3-nonEmpty.mp3")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		tag, err := Open(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{MP3})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
+
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+
+		tag.SetArtist("TestArtist2")
+
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{MP3})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist2")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
+
+	t.Run("TestUpdateTagsMP3-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-mp3-nonEmpty.mp3")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-mp3-nonEmpty.mp3", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-mp3-nonEmpty.mp3")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+
+		tag, err := Open(f, ParseOptions{MP3})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{MP3})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+
+		tag.SetArtist("TestArtist2")
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{MP3})
+		assert.NoError(t, err)
+		f.Close()
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist2")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 }
 
 func TestWriteEmptyTagsM4A(t *testing.T) {

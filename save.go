@@ -2,17 +2,23 @@ package audiometa
 
 import (
 	"bytes"
+	"fmt"
 	"image/jpeg"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 
+	"github.com/aler9/writerseeker"
 	mp3TagLib "github.com/bogem/id3v2/v2"
 	"github.com/gcottom/audiometa/v2/flac"
 	"github.com/sunfish-shogi/bufseekio"
 )
 
-// Save saves the corresponding IDTag to the audio file that it references and returns an error if the saving process fails
+// Save writes the full ID Tag and audio to the io.Writer w.
+// If w is of type *os.File, Save closes w and reopens it with
+// flags os.O_CREATE|os.O_WRONLY|os.O_TRUNC. If w is of type *os.File,
+// Save closes w when it is done.
 func (tag *IDTag) Save(w io.Writer) error {
 	fileType := FileType(tag.fileType)
 	if _, err := tag.reader.Seek(0, io.SeekStart); err != nil {
@@ -31,7 +37,11 @@ func (tag *IDTag) Save(w io.Writer) error {
 }
 
 func saveMP3(tag *IDTag, w io.Writer) error {
-	r := tag.reader
+	b, err := io.ReadAll(tag.reader)
+	if err != nil {
+		return err
+	}
+	r := bytes.NewReader(b)
 	mp3Tag, err := mp3TagLib.ParseReader(r, mp3TagLib.Options{Parse: true})
 	if err != nil {
 		return err
@@ -60,28 +70,35 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 		}
 		mp3Tag.AddFrame(v, textFrame)
 	}
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
+	_, err = r.Seek(0, io.SeekStart)
+	if err != nil {
 		return err
 	}
 	originalSize, err := parseHeader(r)
 	if err != nil {
 		return err
 	}
-
-	if reflect.TypeOf(r) == reflect.TypeOf(new(os.File)) &&
-		reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) &&
-		r.(*os.File).Name() == w.(*os.File).Name() {
-		//in and out are the same file so we have to temp it
-		t, err := os.Create("temp")
+	if reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) {
+		defer w.(*os.File).Close()
+		f := w.(*os.File)
+		path, err := filepath.Abs(f.Name())
 		if err != nil {
 			return err
 		}
-		defer t.Close()
-		defer os.Remove(t.Name())
-		// Write tag in new file.
-		if _, err = mp3Tag.WriteTo(t); err != nil {
+		w2, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
 			return err
 		}
+		defer w2.Close()
+		//in and out are the same file so we have to temp it
+		t := &writerseeker.WriterSeeker{}
+		// Write tag in new file.
+		if h, err := mp3Tag.WriteTo(t); err != nil {
+			return err
+		} else {
+			fmt.Printf("header size: %d\n", h)
+		}
+		fmt.Printf("original tag size: %d\n", originalSize)
 		// Seek to a music part of original file.
 		if _, err = r.Seek(originalSize, io.SeekStart); err != nil {
 			return err
@@ -89,15 +106,20 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 		// Write to new file the music part.
 		buf := getByteSlice(128 * 1024)
 		defer putByteSlice(buf)
-		if _, err = io.CopyBuffer(t, r, buf); err != nil {
+		if c, err := io.CopyBuffer(t, r, buf); err != nil {
 			return err
+		} else {
+			fmt.Printf("copied to t: %d\n", c)
 		}
 		if _, err = t.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
-		if _, err = io.CopyBuffer(w, t, buf); err != nil {
+		if c, err := io.CopyBuffer(w2, bytes.NewReader(t.Bytes()), buf); err != nil {
 			return err
+		} else {
+			fmt.Printf("copied to w: %d\n", c)
 		}
+
 		return nil
 	}
 
