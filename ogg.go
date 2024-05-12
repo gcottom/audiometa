@@ -9,9 +9,11 @@ import (
 	"image/jpeg"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
+	"github.com/aler9/writerseeker"
 	"github.com/sunfish-shogi/bufseekio"
 )
 
@@ -295,20 +297,12 @@ func (m *metadataVorbis) readPictureBlock(r io.Reader) error {
 
 // Saves the tags for an ogg Opus file
 func saveOpusTags(tag *IDTag, w io.Writer) error {
-	needsTemp := reflect.TypeOf(tag.reader) == reflect.TypeOf(new(os.File)) &&
-		reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) &&
-		tag.reader.(*os.File).Name() == w.(*os.File).Name()
-	var t *os.File
+	needsTemp := reflect.TypeOf(w) == reflect.TypeOf(new(os.File))
+	var t *writerseeker.WriterSeeker
 	var encoder *oggEncoder
 	if needsTemp {
 		//in and out are the same file so we have to temp it
-		t, err := os.Create("audiometa-temp")
-		if err != nil {
-			return err
-		}
-		defer t.Close()
-		defer os.Remove(t.Name())
-
+		t = &writerseeker.WriterSeeker{}
 	}
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	decoder := newOggDecoder(r)
@@ -407,10 +401,18 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 		// Step 7: Close and rename the files to the original file
 	}
 	if needsTemp {
-		if _, err := t.Seek(0, io.SeekStart); err != nil {
+		defer w.(*os.File).Close()
+		f := w.(*os.File)
+		path, err := filepath.Abs(f.Name())
+		if err != nil {
 			return err
 		}
-		if _, err := io.Copy(w, t); err != nil {
+		w2, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
+			return err
+		}
+		defer w2.Close()
+		if _, err := io.Copy(w2, bytes.NewReader(t.Bytes())); err != nil {
 			return err
 		}
 	}
@@ -419,20 +421,12 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 
 // Saves the given tag structure to a ogg vorbis audio file
 func saveVorbisTags(tag *IDTag, w io.Writer) error {
-	needsTemp := reflect.TypeOf(tag.reader) == reflect.TypeOf(new(os.File)) &&
-		reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) &&
-		tag.reader.(*os.File).Name() == w.(*os.File).Name()
-	var t *os.File
+	needsTemp := reflect.TypeOf(w) == reflect.TypeOf(new(os.File))
+	var t *writerseeker.WriterSeeker
 	var encoder *oggEncoder
 	if needsTemp {
 		//in and out are the same file so we have to temp it
-		t, err := os.Create("audiometa-temp")
-		if err != nil {
-			return err
-		}
-		defer t.Close()
-		defer os.Remove(t.Name())
-
+		t = &writerseeker.WriterSeeker{}
 	}
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	decoder := newOggDecoder(r)
@@ -524,10 +518,18 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 		}
 	}
 	if needsTemp {
-		if _, err := t.Seek(0, io.SeekStart); err != nil {
+		defer w.(*os.File).Close()
+		f := w.(*os.File)
+		path, err := filepath.Abs(f.Name())
+		if err != nil {
 			return err
 		}
-		if _, err := io.Copy(w, t); err != nil {
+		w2, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
+			return err
+		}
+		defer w2.Close()
+		if _, err := io.Copy(w2, bytes.NewReader(t.Bytes())); err != nil {
 			return err
 		}
 	}

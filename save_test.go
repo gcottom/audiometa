@@ -646,480 +646,426 @@ func TestFLAC(t *testing.T) {
 	})
 }
 
-func TestWriteEmptyTagsOggVorbis(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+func TestOggVorbis(t *testing.T) {
+	t.Run("TestWriteEmptyTagsOggVorbis-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
+		tag, err := parse(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = parse(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Empty(t, tag.Artist())
+		assert.Empty(t, tag.Album())
+		assert.Empty(t, tag.Title())
+	})
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+	t.Run("TestWriteEmptyTagsOggVorbis-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-ogg-vorbis-nonEmpty.ogg", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-ogg-vorbis-nonEmpty.ogg")
+		f, err := os.OpenFile(path, os.O_RDONLY, 0755)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err := Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+		f, err = os.OpenFile(path, os.O_RDONLY, 0755)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		f.Close()
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Empty(t, tag.Artist())
+		assert.Empty(t, tag.Album())
+		assert.Empty(t, tag.Title())
+	})
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
-		t.Fatal("Failed to remove tags for empty tag test!")
-	}
+	t.Run("TestWriteTagsOggVorbisFromEmpty-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
+
+		tag, err := Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
+
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
+
+	t.Run("TestWriteTagsOggVorbisFromEmpty-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-ogg-vorbis-nonEmpty.ogg", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-ogg-vorbis-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+
+		tag, err := Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
+
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
+
+	t.Run("TestUpdateTagsOggVorbis-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
+
+		tag, err := Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
+
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+
+		tag.SetArtist("TestArtist2")
+
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist2")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
+
+	t.Run("TestUpdateTagsOggVorbis-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-ogg-vorbis-nonEmpty.ogg", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-ogg-vorbis-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+
+		tag, err := Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+
+		tag.SetArtist("TestArtist2")
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		f.Close()
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist2")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 }
-func TestWriteTagsOggVorbisFromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
+func TestOggOpus(t *testing.T) {
+	t.Run("TestWriteEmptyTagsOggOpus-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
+		tag, err := parse(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = parse(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Empty(t, tag.Artist())
+		assert.Empty(t, tag.Album())
+		assert.Empty(t, tag.Title())
+	})
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+	t.Run("TestWriteEmptyTagsOggOpus-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-opus-nonEmpty.ogg")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-opus-nonEmpty.ogg", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-opus-nonEmpty.ogg")
+		f, err := os.OpenFile(path, os.O_RDONLY, 0755)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err := Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+		f, err = os.OpenFile(path, os.O_RDONLY, 0755)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		f.Close()
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Empty(t, tag.Artist())
+		assert.Empty(t, tag.Album())
+		assert.Empty(t, tag.Title())
+	})
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-}
-func TestWriteTagsOggVorbisFromEmptyExtended(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+	t.Run("TestWriteTagsOggOpusFromEmpty-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		tag, err := Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
-	tag.SetAdditionalTag("TEST", "TEST")
-	tag.SetAdditionalTag("TEST2", "TEST2")
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-	if tag.PassThrough["TEST"] != "TEST" || tag.PassThrough["TEST2"] != "TEST2" {
-		t.Fatal("Extended Tags Not Found")
-	}
-}
-func TestUpdateTagsOggVorbis(t *testing.T) {
-	TestWriteTagsOggVorbisFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+	t.Run("TestWriteTagsOggOpusFromEmpty-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-opus-nonEmpty.ogg")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-opus-nonEmpty.ogg", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-opus-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		tag, err := Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-	tag.SetArtist("TestArtist2")
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+	t.Run("TestUpdateTagsOggOpus-buffers", func(t *testing.T) {
+		path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		b, err := io.ReadAll(f)
+		assert.NoError(t, err)
+		r := bytes.NewReader(b)
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-}
-func TestUpdateTagsOggVorbisExtended(t *testing.T) {
-	TestWriteTagsOggVorbisFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-ogg-vorbis-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+		tag, err := Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.ClearAllTags()
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		buffy := new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
-	tag.SetAdditionalTag("TEST", "TEST")
-	tag.SetAdditionalTag("TEST2", "TEST2")
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		tag.SetArtist("TestArtist2")
 
-	tag.SetArtist("TestArtist2")
-	tag.SetAdditionalTag("TEST", "TEST3")
+		buffy = new(bytes.Buffer)
+		err = SaveTag(tag, buffy)
+		assert.NoError(t, err)
 
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		r = bytes.NewReader(buffy.Bytes())
+		tag, err = Open(r, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist2")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-	if tag.PassThrough["TEST"] != "TEST3" || tag.PassThrough["TEST2"] != "TEST2" {
-		t.Fatal("Extended Tags Not Found")
-	}
-}
-func TestWriteEmptyTagsOggOpus(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+	t.Run("TestUpdateTagsOggOpus-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/testdata-opus-nonEmpty.ogg")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/testdata-opus-nonEmpty.ogg", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/testdata-opus-nonEmpty.ogg")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		tag, err := Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		tag.SetArtist("TestArtist1")
+		tag.SetTitle("TestTitle1")
+		tag.SetAlbum("TestAlbum1")
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "" || tag.Album() != "" || tag.Title() != "" {
-		t.Fatal("Failed to remove tags for empty tag test!")
-	}
-}
-func TestWriteTagsOggOpusFromEmpty(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist1")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
 
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
+		tag.SetArtist("TestArtist2")
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
 
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
-
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-}
-func TestWriteTagsOggOpusFromEmptyExtended(t *testing.T) {
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
-
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
-	tag.SetAlbumArtFromFilePath("testdata/testdata-img-1.jpg")
-	tag.SetAdditionalTag("TEST", "TEST")
-	tag.SetAdditionalTag("TEST2", "TEST2")
-
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist1" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-	if tag.PassThrough["TEST"] != "TEST" || tag.PassThrough["TEST2"] != "TEST2" {
-		t.Fatal("Extended Tags Not Found")
-	}
-}
-func TestUpdateTagsOggOpus(t *testing.T) {
-	TestWriteTagsOggOpusFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
-
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
-
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-	tag.SetArtist("TestArtist2")
-
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-}
-func TestUpdateTagsOggOpusExtended(t *testing.T) {
-	TestWriteTagsOggOpusFromEmpty(t)
-	path, _ := filepath.Abs("testdata/testdata-opus-nonEmpty.ogg")
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal("Error opening file!")
-	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatal("Error reading file!")
-	}
-	r := bytes.NewReader(b)
-	tag, err := parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.ClearAllTags()
-
-	buffy := new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	tag.SetArtist("TestArtist1")
-	tag.SetTitle("TestTitle1")
-	tag.SetAlbum("TestAlbum1")
-	tag.SetAdditionalTag("TEST", "TEST")
-	tag.SetAdditionalTag("TEST2", "TEST2")
-
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	tag.SetArtist("TestArtist2")
-	tag.SetAdditionalTag("TEST", "TEST3")
-
-	buffy = new(bytes.Buffer)
-	if err = SaveTag(tag, buffy); err != nil {
-		t.Fatal("error saving")
-	}
-
-	r = bytes.NewReader(buffy.Bytes())
-	tag, err = parse(r, ParseOptions{OGG})
-	if err != nil {
-		t.Fatal("Error parsing!")
-	}
-	if tag.Artist() != "TestArtist2" || tag.Album() != "TestAlbum1" || tag.Title() != "TestTitle1" {
-		t.Fatal("Failed to validate new tags")
-	}
-	if tag.PassThrough["TEST"] != "TEST3" || tag.PassThrough["TEST2"] != "TEST2" {
-		t.Fatal("Extended Tags Not Found")
-	}
+		f, err = os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+		tag, err = Open(f, ParseOptions{OGG})
+		assert.NoError(t, err)
+		f.Close()
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "TestArtist2")
+		assert.Equal(t, tag.Album(), "TestAlbum1")
+		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
 }
