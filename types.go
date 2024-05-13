@@ -20,7 +20,6 @@ type IDTag struct {
 	title        string       //Title
 	year         string       //Year
 	bpm          string       //BPM
-	filePath     string       //The filepath of the file
 	codec        string       //The codec of the file (ogg use only)
 	copyrightMsg string       //Copyright Message
 	date         string       //Date

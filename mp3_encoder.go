@@ -49,5 +49,6 @@ func getByteSlice(size int) []byte {
 
 // putByteSlice puts b to pool.
 func putByteSlice(b []byte) {
+	//lint:ignore SA6002 imported
 	bsPool.Put(b)
 }

@@ -15,9 +15,8 @@ import (
 )
 
 // Save writes the full ID Tag and audio to the io.Writer w.
-// If w is of type *os.File, Save closes w and reopens it with
-// flags os.O_CREATE|os.O_WRONLY|os.O_TRUNC. If w is of type *os.File,
-// Save closes w when it is done.
+// If w is of type *os.File, Save overwrites the existing file
+// and when complete, w points to the end of the file.
 func (tag *IDTag) Save(w io.Writer) error {
 	fileType := FileType(tag.fileType)
 	if _, err := tag.reader.Seek(0, io.SeekStart); err != nil {
@@ -74,7 +73,6 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 		return err
 	}
 	if reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) {
-		defer w.(*os.File).Close()
 		f := w.(*os.File)
 		path, err := filepath.Abs(f.Name())
 		if err != nil {
@@ -105,6 +103,9 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 			return err
 		}
 		if _, err := io.CopyBuffer(w2, bytes.NewReader(t.Bytes()), buf); err != nil {
+			return err
+		}
+		if _, err = f.Seek(0, io.SeekEnd); err != nil {
 			return err
 		}
 		return nil

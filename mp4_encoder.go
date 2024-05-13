@@ -286,7 +286,6 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 	}
 
 	if reflect.TypeOf(wo) == reflect.TypeOf(new(os.File)) {
-		defer wo.(*os.File).Close()
 		f := wo.(*os.File)
 		path, err := filepath.Abs(f.Name())
 		if err != nil {
@@ -297,7 +296,12 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 			return err
 		}
 		defer w2.Close()
-		w2.Write(ws.Bytes())
+		if _, err = w2.Write(ws.Bytes()); err != nil {
+			return err
+		}
+		if _, err = f.Seek(0, io.SeekEnd); err != nil {
+			return err
+		}
 		return nil
 	}
 	wo.Write(ws.Bytes())

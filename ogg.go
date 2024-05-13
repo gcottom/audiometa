@@ -401,7 +401,6 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 		// Step 7: Close and rename the files to the original file
 	}
 	if needsTemp {
-		defer w.(*os.File).Close()
 		f := w.(*os.File)
 		path, err := filepath.Abs(f.Name())
 		if err != nil {
@@ -413,6 +412,9 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 		}
 		defer w2.Close()
 		if _, err := io.Copy(w2, bytes.NewReader(t.Bytes())); err != nil {
+			return err
+		}
+		if _, err = f.Seek(0, io.SeekEnd); err != nil {
 			return err
 		}
 	}
@@ -518,7 +520,6 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 		}
 	}
 	if needsTemp {
-		defer w.(*os.File).Close()
 		f := w.(*os.File)
 		path, err := filepath.Abs(f.Name())
 		if err != nil {
@@ -530,6 +531,9 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 		}
 		defer w2.Close()
 		if _, err := io.Copy(w2, bytes.NewReader(t.Bytes())); err != nil {
+			return err
+		}
+		if _, err = f.Seek(0, io.SeekEnd); err != nil {
 			return err
 		}
 	}
