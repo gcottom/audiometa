@@ -1,6 +1,6 @@
 module github.com/gcottom/audiometa/v2
 
-go 1.21.6
+go 1.18
 
 require (
 	github.com/abema/go-mp4 v1.2.0
