@@ -241,6 +241,7 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 	atomsList := getAtomsList()
 
 	ws := &writerseeker.WriterSeeker{}
+	defer ws.Close()
 	atoms, err := populateAtoms(r, _tags)
 	if err != nil {
 		return err

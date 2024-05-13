@@ -85,6 +85,7 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 		defer w2.Close()
 		//in and out are the same file so we have to temp it
 		t := &writerseeker.WriterSeeker{}
+		defer t.Close()
 		// Write tag in new file.
 		if _, err := mp3Tag.WriteTo(t); err != nil {
 			return err

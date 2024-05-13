@@ -56,6 +56,7 @@ func flacSave(r io.Reader, w io.Writer, m []*flac.MetaDataBlock, needsTemp bool)
 	if needsTemp {
 		//in and out are the same file so we have to temp it
 		t := &writerseeker.WriterSeeker{}
+		defer t.Close()
 		// Write tag in new file.
 		if _, err := t.Write([]byte("fLaC")); err != nil {
 			return err

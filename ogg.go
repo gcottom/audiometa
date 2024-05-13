@@ -303,6 +303,7 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 	if needsTemp {
 		//in and out are the same file so we have to temp it
 		t = &writerseeker.WriterSeeker{}
+		defer t.Close()
 	}
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	decoder := newOggDecoder(r)
@@ -429,6 +430,7 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 	if needsTemp {
 		//in and out are the same file so we have to temp it
 		t = &writerseeker.WriterSeeker{}
+		defer t.Close()
 	}
 	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
 	decoder := newOggDecoder(r)
