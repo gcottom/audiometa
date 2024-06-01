@@ -7,7 +7,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Test
-          run: go test -v ./...
+          run: go test -v .
         - name: Update coverage report
           uses: ncruces/go-coverage-report@v0
           with:
