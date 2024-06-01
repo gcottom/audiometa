@@ -9,14 +9,14 @@ jobs:
         - name: Checkout Repo
           id: checkout_repo
           uses: actions/checkout@v3
-        - name: Test
-          run: go test -v .
-        - name: Update coverage report
-          uses: ncruces/go-coverage-report@v0
-          with:
-            report: true
-            amend: true
-          if: |
-            matrix.os == 'ubuntu-latest' &&
-            github.event_name == 'push'  
-          continue-on-error: true
+        - name: do_go_mod_tidy
+          run: go mod tidy
+        - name: Run Unit tests
+          run: |
+            go test -race -covermode atomic -coverprofile=covprofile ./...
+        - name: Install goveralls
+          run: go install github.com/mattn/goveralls@latest
+        - name: Send coverage
+          env:
+            COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+          run: goveralls -coverprofile=covprofile -service=github
