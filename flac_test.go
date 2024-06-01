@@ -40,35 +40,48 @@ func TestFLACSaveErrorCases(t *testing.T) {
 }
 
 func TestFLACSave(t *testing.T) {
-	mockReader := new(mockReader2)
-	mockWriter := new(mockWriter2)
-	metaBlocks := []*flac.MetaDataBlock{
-		// Add mock MetaDataBlocks as needed
-	}
 
 	t.Run("Error Writing FLAC Header", func(t *testing.T) {
+		mockReader := new(mockReader2)
+		mockWriter := new(mockWriter2)
+		metaBlocks := []*flac.MetaDataBlock{
+			// Add mock MetaDataBlocks as needed
+		}
 		mockWriter.On("Write", mock.Anything).Return(0, errors.New("write error"))
 
 		err := flacSave(mockReader, mockWriter, metaBlocks, false)
 		assert.Error(t, err)
+		assert.Equal(t, "write error", err.Error())
 		mockWriter.AssertExpectations(t)
 	})
 
 	t.Run("Error Writing MetaDataBlock", func(t *testing.T) {
+		mockReader := new(mockReader2)
+		mockWriter := new(mockWriter2)
+		metaBlocks := []*flac.MetaDataBlock{
+			// Add mock MetaDataBlocks as needed
+		}
 		mockReader.On("Read", mock.Anything).Return(8, nil)
 		mockWriter.On("Write", mock.Anything).Return(0, errors.New("write error"))
 
 		err := flacSave(mockReader, mockWriter, metaBlocks, false)
 		assert.Error(t, err)
+		assert.Equal(t, "write error", err.Error())
 		mockWriter.AssertExpectations(t)
 	})
 
 	t.Run("Error Copying Data", func(t *testing.T) {
+		mockReader := new(mockReader2)
+		mockWriter := new(mockWriter2)
+		metaBlocks := []*flac.MetaDataBlock{
+			// Add mock MetaDataBlocks as needed
+		}
 		mockWriter.On("Write", mock.Anything).Return(0, nil)
 		mockReader.On("Read", mock.Anything).Return(0, errors.New("read error"))
 
 		err := flacSave(mockReader, mockWriter, metaBlocks, false)
 		assert.Error(t, err)
+		assert.Equal(t, "read error", err.Error())
 		mockWriter.AssertExpectations(t)
 	})
 }
