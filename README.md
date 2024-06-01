@@ -4,7 +4,7 @@
 MP3/MP4/FLAC/OGG tag reader and writer for go
 
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/gcottom/audiometa.svg)](https://pkg.go.dev/github.com/gcottom/audiometa)[![Go Report Card](https://goreportcard.com/badge/github.com/gcottom/audiometa)](https://goreportcard.com/report/github.com/gcottom/audiometa)[![Coverage Status](https://coveralls.io/repos/github/gcottom/audiometa/badge.svg?branch=main)](https://coveralls.io/github/gcottom/audiometa?branch=main)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gcottom/audiometa.svg)](https://pkg.go.dev/github.com/gcottom/audiometa)   [![Go Report Card](https://goreportcard.com/badge/github.com/gcottom/audiometa)](https://goreportcard.com/report/github.com/gcottom/audiometa)   [![Coverage Status](https://coveralls.io/repos/github/gcottom/audiometa/badge.svg?branch=main)](https://coveralls.io/github/gcottom/audiometa?branch=main)
 
 
 This package allows you to parse and write ID tags for mp3, mp4 (m4a, m4b, m4p), FLAC, and ogg (Vorbis, OPUS) files.
