@@ -136,7 +136,7 @@ func readOggTags(r io.Reader) (*IDTag, error) {
 	for {
 		bs, err := od.read(r)
 		if err != nil {
-			fmt.Println("Error in read function")
+			fmt.Println("error in read function")
 			return nil, err
 		}
 
@@ -305,11 +305,15 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 		t = &writerseeker.WriterSeeker{}
 		defer t.Close()
 	}
-	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
+	readDat, err := io.ReadAll(tag.reader)
+	if err != nil {
+		return err
+	}
+	r := bytes.NewReader(readDat)
 	decoder := newOggDecoder(r)
 	page, err := decoder.decodeOgg()
 	if err != nil {
-		return nil
+		return err
 	}
 	if needsTemp {
 		encoder = newOggEncoder(page.Serial, t)
@@ -317,7 +321,7 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 		encoder = newOggEncoder(page.Serial, w)
 	}
 	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
-		return nil
+		return err
 	}
 	var vorbisCommentPage *oggPage
 	for {
@@ -326,7 +330,7 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 			if err == io.EOF {
 				break // Reached the end of the input Ogg stream
 			}
-			return nil
+			return err
 		}
 
 		// Find the Vorbis comment page and store it
@@ -347,7 +351,7 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 				commentFields = append(commentFields, "TITLE="+tag.title)
 			}
 			if tag.date != "" {
-				commentFields = append(commentFields, "DATE="+tag.title)
+				commentFields = append(commentFields, "DATE="+tag.date)
 			}
 			if tag.albumArtist != "" {
 				commentFields = append(commentFields, "ALBUMARTIST="+tag.albumArtist)
@@ -385,22 +389,22 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 
 			// Step 6: Write the updated Vorbis comment page to the output file
 			if err = encoder.encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets); err != nil {
-				return nil
+				return err
 			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
 			if page.Type == EOS {
 				if err = encoder.encodeEOS(page.Granule, page.Packets); err != nil {
-					return nil
-				} else {
-					if err = encoder.encode(page.Granule, page.Packets); err != nil {
-						return nil
-					}
+					return err
+				}
+			} else {
+				if err = encoder.encode(page.Granule, page.Packets); err != nil {
+					return err
 				}
 			}
 		}
-		// Step 7: Close and rename the files to the original file
 	}
+	// Step 7: Close and rename the files to the original file
 	if needsTemp {
 		f := w.(*os.File)
 		path, err := filepath.Abs(f.Name())
