@@ -6,6 +6,9 @@ jobs:
     build-deploy:
         runs-on: ubuntu-latest
         steps:
+        - name: Checkout Repo
+          id: checkout_repo
+          uses: actions/checkout@v3
         - name: Test
           run: go test -v .
         - name: Update coverage report
