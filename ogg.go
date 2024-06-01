@@ -207,7 +207,7 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 		split := strings.Split(cmt, "=")
 		if len(split) == 2 {
 			temp := strings.ToUpper(split[0])
-			if temp != "ALBUM" && temp != "ARTIST" && temp != "ALBUMARTIST" && temp != "DATE" && temp != "TITLE" && temp != "GENRE" && temp != "COMMENT" && temp != "COPYRIGHT" && temp != "PUBLISHER" {
+			if temp != "ALBUM" && temp != "ARTIST" && temp != "ALBUMARTIST" && temp != "DATE" && temp != "TITLE" && temp != "GENRE" && temp != "COMMENT" && temp != "COPYRIGHT" && temp != "PUBLISHER" && temp != "METADATA_BLOCK_PICTURE" {
 				resultTag.PassThrough[temp] = split[1]
 			} else {
 				m.c[temp] = split[1]
@@ -225,7 +225,7 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 	resultTag.publisher = m.c["PUBLISHER"]
 	resultTag.composer = m.c["COMPOSER"]
 
-	if b64data, ok := m.c["metadata_block_picture"]; ok {
+	if b64data, ok := m.c["METADATA_BLOCK_PICTURE"]; ok {
 		data, err := base64.StdEncoding.DecodeString(b64data)
 		if err != nil {
 			return nil, err

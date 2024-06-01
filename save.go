@@ -2,6 +2,7 @@ package audiometa
 
 import (
 	"bytes"
+	"fmt"
 	"image/jpeg"
 	"io"
 	"os"
@@ -36,10 +37,23 @@ func (tag *IDTag) Save(w io.Writer) error {
 
 func saveMP3(tag *IDTag, w io.Writer) error {
 	r := tag.reader
+
+	readerBytes, err := io.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	r = bytes.NewReader(readerBytes)
+	fmt.Println(len(readerBytes))
+	if _, err = r.Seek(0, 0); err != nil {
+		return err
+	}
+
 	mp3Tag, err := mp3TagLib.ParseReader(r, mp3TagLib.Options{Parse: true})
 	if err != nil {
 		return err
 	}
+	originalSize := int64(mp3Tag.Size())
+	fmt.Println(originalSize)
 	for k, v := range mp3TextFrames {
 		if reflect.ValueOf(*tag).FieldByName(k).IsZero() {
 			mp3Tag.DeleteFrames(v)
@@ -68,7 +82,7 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	originalSize, err := parseHeader(r)
+
 	if err != nil {
 		return err
 	}
@@ -87,23 +101,28 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 		t := &writerseeker.WriterSeeker{}
 		defer t.Close()
 		// Write tag in new file.
-		if _, err := mp3Tag.WriteTo(t); err != nil {
+		if tagbytes, err := mp3Tag.WriteTo(t); err != nil {
 			return err
+		} else {
+			fmt.Println(tagbytes)
 		}
+
 		// Seek to a music part of original file.
 		if _, err = r.Seek(originalSize, io.SeekStart); err != nil {
 			return err
 		}
 		// Write to new file the music part.
-		buf := getByteSlice(128 * 1024)
-		defer putByteSlice(buf)
-		if _, err := io.CopyBuffer(t, r, buf); err != nil {
+		//musicData, err := io.ReadAll(r)
+		//if err != nil {
+		//	return err
+		//}
+		if _, err := io.Copy(t, r); err != nil {
 			return err
 		}
 		if _, err = t.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
-		if _, err := io.CopyBuffer(w2, bytes.NewReader(t.Bytes()), buf); err != nil {
+		if _, err := io.Copy(w2, bytes.NewReader(t.Bytes())); err != nil {
 			return err
 		}
 		if _, err = f.Seek(0, io.SeekEnd); err != nil {
@@ -122,9 +141,7 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 	}
 
 	// Write to new file the music part.
-	buf := getByteSlice(128 * 1024)
-	defer putByteSlice(buf)
-	if _, err = io.CopyBuffer(w, r, buf); err != nil {
+	if _, err = io.Copy(w, r); err != nil {
 		return err
 	}
 	return nil

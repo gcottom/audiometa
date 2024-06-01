@@ -98,17 +98,6 @@ func (m metadataMP4) readAtoms(r io.ReadSeeker) error {
 
 		_, ok := atoms[name]
 		var data []string
-		if name == "----" {
-			name, data, err = readCustomAtom(r, size)
-			if err != nil {
-				return err
-			}
-
-			if name != "----" {
-				ok = true
-				size = 0 // already read data
-			}
-		}
 
 		if !ok {
 			_, err := r.Seek(int64(size-8), io.SeekCurrent)
@@ -215,56 +204,6 @@ func readAtomHeader(r io.ReadSeeker) (name string, size uint32, err error) {
 	}
 	name, err = readString(r, 4)
 	return
-}
-
-// Generic atom.
-// Should have 3 sub atoms : mean, name and data.
-// We check that mean is "com.apple.iTunes" and we use the subname as
-// the name, and move to the data atom.
-// Data atom could have multiple data values, each with a header.
-// If anything goes wrong, we jump at the end of the "----" atom.
-func readCustomAtom(r io.ReadSeeker, size uint32) (_ string, data []string, _ error) {
-	subNames := make(map[string]string)
-
-	for size > 8 {
-		subName, subSize, err := readAtomHeader(r)
-		if err != nil {
-			return "", nil, err
-		}
-
-		// Remove the size of the atom from the size counter
-		if size >= subSize {
-			size -= subSize
-		} else {
-			return "", nil, ErrMP4InvalidAtomSize
-		}
-
-		b, err := readBytes(r, uint(subSize-8))
-		if err != nil {
-			return "", nil, err
-		}
-
-		if len(b) < 4 {
-			return "", nil, ErrMP4InvalidEncoding
-		}
-		switch subName {
-		case "mean", "name":
-			subNames[subName] = string(b[4:])
-		case "data":
-			data = append(data, string(b[4:]))
-		}
-	}
-
-	// there should remain only the header size
-	if size != 8 {
-		err := ErrMP4AtomOutOfBounds
-		return "", nil, err
-	}
-
-	if subNames["mean"] != "com.apple.iTunes" || subNames["name"] == "" || len(data) == 0 {
-		return "----", nil, nil
-	}
-	return subNames["name"], data, nil
 }
 
 func (m metadataMP4) getString(n []string) string {

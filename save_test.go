@@ -2,6 +2,8 @@ package audiometa
 
 import (
 	"bytes"
+	"fmt"
+	"image"
 	"io"
 	"os"
 	"path/filepath"
@@ -9,6 +11,38 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func compareImages(src1 [][][3]float32, src2 [][][3]float32) bool {
+	dif := 0
+	for i, dat1 := range src1 {
+		for j, _ := range dat1 {
+			if len(src1[i][j]) != len(src2[i][j]) {
+				dif++
+			}
+		}
+	}
+	fmt.Println("difs:", dif)
+	return dif == 0
+}
+
+func image_2_array_at(src image.Image) [][][3]float32 {
+	bounds := src.Bounds()
+	width, height := bounds.Max.X, bounds.Max.Y
+	iaa := make([][][3]float32, height)
+
+	for y := 0; y < height; y++ {
+		row := make([][3]float32, width)
+		for x := 0; x < width; x++ {
+			r, g, b, _ := src.At(x, y).RGBA()
+			// A color's RGBA method returns values in the range [0, 65535].
+			// Shifting by 8 reduces this to the range [0, 255].
+			row[x] = [3]float32{float32(r >> 8), float32(g >> 8), float32(b >> 8)}
+		}
+		iaa[y] = row
+	}
+
+	return iaa
+}
 
 func TestMP3(t *testing.T) {
 	t.Run("TestWriteEmptyTagsMP3-buffers", func(t *testing.T) {
@@ -82,6 +116,9 @@ func TestMP3(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -92,6 +129,15 @@ func TestMP3(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestWriteTagsMP3FromEmpty-file", func(t *testing.T) {
@@ -111,6 +157,9 @@ func TestMP3(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
@@ -124,6 +173,16 @@ func TestMP3(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
+
 	})
 
 	t.Run("TestUpdateTagsMP3-buffers", func(t *testing.T) {
@@ -148,6 +207,9 @@ func TestMP3(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -171,6 +233,14 @@ func TestMP3(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestUpdateTagsMP3-file", func(t *testing.T) {
@@ -190,6 +260,9 @@ func TestMP3(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
 
@@ -215,6 +288,14 @@ func TestMP3(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 }
 
@@ -300,6 +381,7 @@ func TestM4A(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+
 	})
 
 	t.Run("TestWriteTagsM4AFromEmpty-file", func(t *testing.T) {
@@ -498,6 +580,9 @@ func TestFLAC(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -508,6 +593,14 @@ func TestFLAC(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestWriteTagsFLACFromEmpty-file", func(t *testing.T) {
@@ -527,6 +620,9 @@ func TestFLAC(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
@@ -540,6 +636,14 @@ func TestFLAC(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestUpdateTagsFLAC-buffers", func(t *testing.T) {
@@ -706,6 +810,9 @@ func TestOggVorbis(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -716,6 +823,14 @@ func TestOggVorbis(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestWriteTagsOggVorbisFromEmpty-file", func(t *testing.T) {
@@ -735,6 +850,9 @@ func TestOggVorbis(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
@@ -748,6 +866,14 @@ func TestOggVorbis(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestUpdateTagsOggVorbis-buffers", func(t *testing.T) {
@@ -772,6 +898,9 @@ func TestOggVorbis(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -795,6 +924,14 @@ func TestOggVorbis(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestUpdateTagsOggVorbis-file", func(t *testing.T) {
@@ -814,6 +951,9 @@ func TestOggVorbis(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
 
@@ -839,6 +979,14 @@ func TestOggVorbis(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 }
 
@@ -980,6 +1128,9 @@ func TestOggOpus(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -1003,6 +1154,14 @@ func TestOggOpus(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestUpdateTagsOggOpus-file", func(t *testing.T) {
@@ -1022,6 +1181,9 @@ func TestOggOpus(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
 
@@ -1047,5 +1209,13 @@ func TestOggOpus(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 }
