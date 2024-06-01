@@ -3,7 +3,6 @@ package audiometa
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 )
 
 // The MIME type as defined in RFC 3534.
@@ -55,31 +54,15 @@ func (o oggPageHeader) toBytesSlice() []byte {
 	_ = binary.Write(b, byteOrder, o.Segments)
 	return b.Bytes()
 }
-func (o oggPageHeader) toBytesBuffer() (*bytes.Buffer, error) {
+func (o oggPageHeader) toBytesBuffer() *bytes.Buffer {
 	b := new(bytes.Buffer)
-	if err := binary.Write(b, byteOrder, o.Magic); err != nil {
-		return nil, fmt.Errorf("failed to write Magic: %w", err)
-	}
-	if err := binary.Write(b, byteOrder, o.Version); err != nil {
-		return nil, fmt.Errorf("failed to write Version: %w", err)
-	}
-	if err := binary.Write(b, byteOrder, o.Flags); err != nil {
-		return nil, fmt.Errorf("failed to write Flags: %w", err)
-	}
-	if err := binary.Write(b, byteOrder, o.GranulePosition); err != nil {
-		return nil, fmt.Errorf("failed to write GranulePosition: %w", err)
-	}
-	if err := binary.Write(b, byteOrder, o.SerialNumber); err != nil {
-		return nil, fmt.Errorf("failed to write SerialNumber: %w", err)
-	}
-	if err := binary.Write(b, byteOrder, o.SequenceNumber); err != nil {
-		return nil, fmt.Errorf("failed to write SequenceNumber: %w", err)
-	}
-	if err := binary.Write(b, byteOrder, o.CRC); err != nil {
-		return nil, fmt.Errorf("failed to write CRC: %w", err)
-	}
-	if err := binary.Write(b, byteOrder, o.Segments); err != nil {
-		return nil, fmt.Errorf("failed to write Segments: %w", err)
-	}
-	return b, nil
+	_ = binary.Write(b, byteOrder, o.Magic)
+	_ = binary.Write(b, byteOrder, o.Version)
+	_ = binary.Write(b, byteOrder, o.Flags)
+	_ = binary.Write(b, byteOrder, o.GranulePosition)
+	_ = binary.Write(b, byteOrder, o.SerialNumber)
+	_ = binary.Write(b, byteOrder, o.SequenceNumber)
+	_ = binary.Write(b, byteOrder, o.CRC)
+	_ = binary.Write(b, byteOrder, o.Segments)
+	return b
 }

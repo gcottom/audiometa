@@ -57,8 +57,7 @@ func TestOggPageHeaderToBytesBuffer(t *testing.T) {
 		2, // Segments
 	}
 
-	result, err := header.toBytesBuffer()
-	assert.NoError(t, err, "There should be no error converting header to bytes buffer.")
+	result := header.toBytesBuffer()
 	assert.Equal(t, expected, result.Bytes(), "The byte buffer representation of the header should match the expected value.")
 }
 

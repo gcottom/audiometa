@@ -95,10 +95,7 @@ func (w *oggEncoder) writePage(h *oggPageHeader, segtbl []byte, pay payload) err
 	page.Body = bb
 
 	OggPageChecksumSet(page)
-	buf, err := page.Header.toBytesBuffer()
-	if err != nil {
-		return err
-	}
+	buf := page.Header.toBytesBuffer()
 	if _, err := buf.WriteTo(w.w); err != nil {
 		return err
 	}
