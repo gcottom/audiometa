@@ -1,0 +1,19 @@
+on:
+    push:
+      branches:
+        - main
+jobs:
+    build-deploy:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Test
+          run: go test -v ./...
+        - name: Update coverage report
+          uses: ncruces/go-coverage-report@v0
+          with:
+            report: true
+            amend: true
+          if: |
+            matrix.os == 'ubuntu-latest' &&
+            github.event_name == 'push'  
+          continue-on-error: true

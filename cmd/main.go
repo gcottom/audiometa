@@ -18,8 +18,7 @@ func main() {
 		if len(args) >= 2 {
 			file = args[1]
 		}
-		mode := "help"
-		mode = strings.ToLower(args[0])
+		mode := strings.ToLower(args[0])
 		if len(args)%2 == 0 && len(args) != 1 {
 			if mode == "p" || mode == "parse" || mode == "r" || mode == "read" || mode == "-p" || mode == "-parse" || mode == "-r" || mode == "-read" {
 				tag, err := audiometa.OpenTagFromPath(file)
