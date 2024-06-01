@@ -18,36 +18,87 @@ import (
 )
 
 var (
-	vorbisCommentPrefix  = []byte("\x03vorbis")
-	opusTagsPrefix       = []byte("OpusTags")
-	oggCRC32Poly04c11db7 = oggCRCTable(0x04c11db7)
+	vorbisCommentPrefix = []byte("\x03vorbis")
+	opusTagsPrefix      = []byte("OpusTags")
+	crcLookup           [8][256]uint32
 )
 
-type crc32Table [256]uint32
-
-func oggCRCTable(poly uint32) *crc32Table {
-	var t crc32Table
-
-	for i := 0; i < 256; i++ {
-		crc := uint32(i) << 24
-		for j := 0; j < 8; j++ {
-			if crc&0x80000000 != 0 {
-				crc = (crc << 1) ^ poly
-			} else {
-				crc <<= 1
-			}
-		}
-		t[i] = crc
-	}
-
-	return &t
+func init() {
+	initCRC32Table()
 }
 
-func oggCRCUpdate(crc uint32, tab *crc32Table, p []byte) uint32 {
-	for _, v := range p {
-		crc = (crc << 8) ^ tab[byte(crc>>24)^v]
+func initCRC32Table() {
+	var i, j int
+	var polynomial uint32 = 0x04C11DB7
+	var crc uint32
+
+	for i = 0; i <= 0xFF; i++ {
+		crc = uint32(i) << 24
+
+		for j = 0; j < 8; j++ {
+			if crc&(1<<31) != 0 {
+				crc = (crc << 1) ^ polynomial
+			} else {
+				crc = crc << 1
+			}
+		}
+
+		crcLookup[0][i] = crc
 	}
+
+	for i = 0; i <= 0xFF; i++ {
+		for j = 1; j < 8; j++ {
+			crcLookup[j][i] = crcLookup[0][(crcLookup[j-1][i]>>24)&0xFF] ^ (crcLookup[j-1][i] << 8)
+		}
+	}
+}
+
+// _osUpdateCRC updates the CRC with the given buffer and size
+func _osUpdateCRC(crc uint32, buffer []byte, size int) uint32 {
+	i := 0
+	for size >= 8 {
+		crc ^= (uint32(buffer[i]) << 24) | (uint32(buffer[i+1]) << 16) | (uint32(buffer[i+2]) << 8) | uint32(buffer[i+3])
+
+		crc = crcLookup[7][crc>>24] ^ crcLookup[6][(crc>>16)&0xFF] ^
+			crcLookup[5][(crc>>8)&0xFF] ^ crcLookup[4][crc&0xFF] ^
+			crcLookup[3][buffer[i+4]] ^ crcLookup[2][buffer[i+5]] ^
+			crcLookup[1][buffer[i+6]] ^ crcLookup[0][buffer[i+7]]
+
+		i += 8
+		size -= 8
+	}
+
+	for size > 0 {
+		crc = (crc << 8) ^ crcLookup[0][((crc>>24)&0xFF)^uint32(buffer[i])]
+		i++
+		size--
+	}
+
 	return crc
+}
+
+// OggPageChecksumSet sets the checksum for the Ogg page
+func OggPageChecksumSet(og *oggPage) {
+	if og != nil {
+		var crcReg uint32
+		buf := make([]byte, 4)
+		og.Header.CRC = uint32(0)
+		// Safety; needed for API behavior, but not framing code
+		buf[0] = 0
+		buf[1] = 0
+		buf[2] = 0
+		buf[3] = 0
+
+		crcReg = _osUpdateCRC(crcReg, og.Header.toBytesSlice(), len(og.Header.toBytesSlice()))
+		crcReg = _osUpdateCRC(crcReg, og.Body, len(og.Body))
+
+		buf[0] = byte(crcReg & 0xFF)
+		buf[1] = byte((crcReg >> 8) & 0xFF)
+		buf[2] = byte((crcReg >> 16) & 0xFF)
+		buf[3] = byte((crcReg >> 24) & 0xFF)
+
+		og.Header.CRC = binary.LittleEndian.Uint32(buf)
+	}
 }
 
 type oggDemuxer struct {
@@ -57,9 +108,8 @@ type oggDemuxer struct {
 // Read ogg packets, can return empty slice of packets and nil err
 // if more data is needed
 func (o *oggDemuxer) read(r io.Reader) ([][]byte, error) {
-	headerBuf := &bytes.Buffer{}
 	var oh oggPageHeader
-	if err := binary.Read(io.TeeReader(r, headerBuf), binary.LittleEndian, &oh); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &oh); err != nil {
 		fmt.Println("Error in binary read")
 		return nil, err
 	}
@@ -81,20 +131,6 @@ func (o *oggDemuxer) read(r io.Reader) ([][]byte, error) {
 	if _, err := io.ReadFull(r, segmentsData); err != nil {
 		fmt.Println("Error in segments data")
 		return nil, err
-	}
-
-	headerBytes := headerBuf.Bytes()
-	// reset CRC to zero in header before checksum
-	headerBytes[22] = 0
-	headerBytes[23] = 0
-	headerBytes[24] = 0
-	headerBytes[25] = 0
-	crc := oggCRCUpdate(0, oggCRC32Poly04c11db7, headerBytes)
-	crc = oggCRCUpdate(crc, oggCRC32Poly04c11db7, segmentTable)
-	crc = oggCRCUpdate(crc, oggCRC32Poly04c11db7, segmentsData)
-	if crc != oh.CRC {
-		return nil, ErrOggInvalidCRC
-
 	}
 
 	if o.packetBufs == nil {
@@ -316,11 +352,11 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 		return err
 	}
 	if needsTemp {
-		encoder = newOggEncoder(page.Serial, t)
+		encoder = newOggEncoder(page.Header.SerialNumber, t)
 	} else {
-		encoder = newOggEncoder(page.Serial, w)
+		encoder = newOggEncoder(page.Header.SerialNumber, w)
 	}
-	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
+	if err = encoder.encodeBOS(page.Header.GranulePosition, page.Packets); err != nil {
 		return err
 	}
 	var vorbisCommentPage *oggPage
@@ -388,17 +424,17 @@ func saveOpusTags(tag *IDTag, w io.Writer) error {
 			vorbisCommentPage.Packets[0] = commentPacket
 
 			// Step 6: Write the updated Vorbis comment page to the output file
-			if err = encoder.encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets); err != nil {
+			if err = encoder.encode(vorbisCommentPage.Header.GranulePosition, vorbisCommentPage.Packets); err != nil {
 				return err
 			}
 		} else {
 			// Write non-Vorbis comment pages to the output file
-			if page.Type == EOS {
-				if err = encoder.encodeEOS(page.Granule, page.Packets); err != nil {
+			if page.Header.Flags == EOS {
+				if err = encoder.encodeEOS(page.Header.GranulePosition, page.Packets); err != nil {
 					return err
 				}
 			} else {
-				if err = encoder.encode(page.Granule, page.Packets); err != nil {
+				if err = encoder.encode(page.Header.GranulePosition, page.Packets); err != nil {
 					return err
 				}
 			}
@@ -440,16 +476,16 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 	decoder := newOggDecoder(r)
 	page, err := decoder.decodeOgg()
 	if err != nil {
-		return nil
+		return err
 	}
 	if needsTemp {
-		encoder = newOggEncoder(page.Serial, t)
+		encoder = newOggEncoder(page.Header.SerialNumber, t)
 	} else {
-		encoder = newOggEncoder(page.Serial, w)
+		encoder = newOggEncoder(page.Header.SerialNumber, w)
 	}
 
-	if err = encoder.encodeBOS(page.Granule, page.Packets); err != nil {
-		return nil
+	if err = encoder.encodeBOS(page.Header.GranulePosition, page.Packets); err != nil {
+		return err
 	}
 	var vorbisCommentPage *oggPage
 	for {
@@ -458,7 +494,7 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 			if err == io.EOF {
 				break // Reached the end of the input Ogg stream
 			}
-			return nil
+			return err
 		}
 
 		// Find the Vorbis comment page and store it
@@ -510,16 +546,16 @@ func saveVorbisTags(tag *IDTag, w io.Writer) error {
 			// Create the new Vorbis comment packet
 			commentPacket := createVorbisCommentPacket(commentFields, img)
 			vorbisCommentPage.Packets[0] = commentPacket
-			if err = encoder.encode(vorbisCommentPage.Granule, vorbisCommentPage.Packets); err != nil {
+			if err = encoder.encode(vorbisCommentPage.Header.GranulePosition, vorbisCommentPage.Packets); err != nil {
 				return nil
 			}
 		} else {
-			if page.Type == EOS {
-				if err = encoder.encodeEOS(page.Granule, page.Packets); err != nil {
+			if page.Header.Flags == EOS {
+				if err = encoder.encodeEOS(page.Header.GranulePosition, page.Packets); err != nil {
 					return nil
 				}
 			} else {
-				if err = encoder.encode(page.Granule, page.Packets); err != nil {
+				if err = encoder.encode(page.Header.GranulePosition, page.Packets); err != nil {
 					return nil
 				}
 			}

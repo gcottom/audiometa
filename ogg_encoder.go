@@ -2,7 +2,6 @@ package audiometa
 
 import (
 	"bytes"
-	"encoding/binary"
 	"io"
 )
 
@@ -76,11 +75,12 @@ func (w *oggEncoder) writePackets(kind byte, granule int64, packets [][]byte) er
 }
 
 func (w *oggEncoder) writePage(h *oggPageHeader, segtbl []byte, pay payload) error {
+	page := &oggPage{}
 	h.SequenceNumber = w.page
 	w.page++
 	h.Segments = byte(len(segtbl))
 	hb := bytes.NewBuffer(w.buf[0:0:cap(w.buf)])
-	_ = binary.Write(hb, byteOrder, h)
+	//_ = binary.Write(hb, byteOrder, h)
 
 	hb.Write(segtbl)
 
@@ -91,11 +91,22 @@ func (w *oggEncoder) writePage(h *oggPageHeader, segtbl []byte, pay payload) err
 	hb.Write(pay.rightover)
 
 	bb := hb.Bytes()
-	crc := crc32(bb)
-	_ = binary.Write(bytes.NewBuffer(bb[0:22:26]), byteOrder, crc)
+	page.Header = h
+	page.Body = bb
 
-	_, err := hb.WriteTo(w.w)
-	return err
+	OggPageChecksumSet(page)
+	buf, err := page.Header.toBytesBuffer()
+	if err != nil {
+		return err
+	}
+	if _, err := buf.WriteTo(w.w); err != nil {
+		return err
+	}
+
+	if _, err := hb.WriteTo(w.w); err != nil {
+		return err
+	}
+	return nil
 }
 
 // payload represents a potentially split group of packets.

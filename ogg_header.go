@@ -1,7 +1,9 @@
 package audiometa
 
 import (
+	"bytes"
 	"encoding/binary"
+	"fmt"
 )
 
 // The MIME type as defined in RFC 3534.
@@ -24,9 +26,9 @@ var byteOrder = binary.LittleEndian
 type oggPageHeader struct {
 	Magic           [4]byte // 0-3, always == "OggS"
 	Version         byte    // 4, always == 0
-	Flags           byte    // 5
-	GranulePosition int64   // 6-13, codec-specific
-	SerialNumber    uint32  // 14-17, associated with a logical stream
+	Flags           byte    // 5 Flags is a bitmask of COP, BOS, and/or EOS.
+	GranulePosition int64   // 6-13, codec-specific, GranulePosition represents the granule position, its interpretation depends on the encapsulated codec.
+	SerialNumber    uint32  // 14-17, associated with a logical stream, SerialNumber represents the bitstream serial number.
 	SequenceNumber  uint32  // 18-21, sequence number of page in packet
 	CRC             uint32  // 22-25
 	Segments        byte    // 26
@@ -41,12 +43,43 @@ const (
 	EOS = 1 << iota
 )
 
-// "unreflected" crc used by libogg
-func crc32(p []byte) uint32 {
-	crcTable := oggCRC32Poly04c11db7
-	c := uint32(0)
-	for _, n := range p {
-		c = crcTable[byte(c>>24)^n] ^ (c << 8)
+func (o oggPageHeader) toBytesSlice() []byte {
+	b := new(bytes.Buffer)
+	_ = binary.Write(b, byteOrder, o.Magic)
+	_ = binary.Write(b, byteOrder, o.Version)
+	_ = binary.Write(b, byteOrder, o.Flags)
+	_ = binary.Write(b, byteOrder, o.GranulePosition)
+	_ = binary.Write(b, byteOrder, o.SerialNumber)
+	_ = binary.Write(b, byteOrder, o.SequenceNumber)
+	_ = binary.Write(b, byteOrder, o.CRC)
+	_ = binary.Write(b, byteOrder, o.Segments)
+	return b.Bytes()
+}
+func (o oggPageHeader) toBytesBuffer() (*bytes.Buffer, error) {
+	b := new(bytes.Buffer)
+	if err := binary.Write(b, byteOrder, o.Magic); err != nil {
+		return nil, fmt.Errorf("failed to write Magic: %w", err)
 	}
-	return c
+	if err := binary.Write(b, byteOrder, o.Version); err != nil {
+		return nil, fmt.Errorf("failed to write Version: %w", err)
+	}
+	if err := binary.Write(b, byteOrder, o.Flags); err != nil {
+		return nil, fmt.Errorf("failed to write Flags: %w", err)
+	}
+	if err := binary.Write(b, byteOrder, o.GranulePosition); err != nil {
+		return nil, fmt.Errorf("failed to write GranulePosition: %w", err)
+	}
+	if err := binary.Write(b, byteOrder, o.SerialNumber); err != nil {
+		return nil, fmt.Errorf("failed to write SerialNumber: %w", err)
+	}
+	if err := binary.Write(b, byteOrder, o.SequenceNumber); err != nil {
+		return nil, fmt.Errorf("failed to write SequenceNumber: %w", err)
+	}
+	if err := binary.Write(b, byteOrder, o.CRC); err != nil {
+		return nil, fmt.Errorf("failed to write CRC: %w", err)
+	}
+	if err := binary.Write(b, byteOrder, o.Segments); err != nil {
+		return nil, fmt.Errorf("failed to write Segments: %w", err)
+	}
+	return b, nil
 }

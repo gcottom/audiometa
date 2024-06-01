@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"strconv"
 )
 
 // OggDecoder is a structure that facilitates the page-by-page decoding of an ogg stream.
@@ -25,33 +24,16 @@ func newOggDecoder(r io.Reader) *oggDecoder {
 
 // Page struct represents a logical unit of an ogg page.
 type oggPage struct {
-	// Type is a bitmask of COP, BOS, and/or EOS.
-	Type byte
-	// Serial represents the bitstream serial number.
-	Serial uint32
-	// Granule represents the granule position, its interpretation depends on the encapsulated codec.
-	Granule int64
+	Header *oggPageHeader
 	// Packets are the actual packet data.
 	// If Type & COP != 0, the first element is
 	// a continuation of the previous page's last packet.
 	Packets [][]byte
+	Body    []byte
 }
 
 // errBadSegs error is thrown when an attempt is made to decode a page with a segment table size less than 1.
 var errBadSegs = ErrOggInvalidSgmtTblSz
-
-// ErrBadCrc error occurs when the CRC field in an ogg page doesn't match the CRC calculated by the Decoder.
-type errBadCrc struct {
-	Found    uint32
-	Expected uint32
-}
-
-// Error function to return a formatted error message
-func (bc errBadCrc) Error() string {
-	// returning a formatted error message with received and expected CRC values
-	return "crc error in packet: invalid " + strconv.FormatInt(int64(bc.Found), 16) +
-		", expected " + strconv.FormatInt(int64(bc.Expected), 16)
-}
 
 // oggs is a byte slice representing the sequence 'OggS'
 var oggs = []byte{'O', 'g', 'g', 'S'}
@@ -129,17 +111,6 @@ func (d *oggDecoder) decodeOgg() (oggPage, error) {
 		return oggPage{}, err
 	}
 
-	page := d.buf[0 : headerSize+nsegs+payloadlen]
-	// Clear out existing crc before calculating it
-	page[22] = 0
-	page[23] = 0
-	page[24] = 0
-	page[25] = 0
-	crc := crc32(page)
-	if crc != h.CRC {
-		return oggPage{}, errBadCrc{h.CRC, crc}
-	}
-
 	packets := make([][]byte, len(packetlens))
 	s := 0
 	for i, l := range packetlens {
@@ -147,5 +118,5 @@ func (d *oggDecoder) decodeOgg() (oggPage, error) {
 		s += l
 	}
 
-	return oggPage{h.Flags, h.SerialNumber, h.GranulePosition, packets}, nil
+	return oggPage{Header: &h, Packets: packets}, nil
 }

@@ -82,10 +82,6 @@ func saveMP3(tag *IDTag, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-
-	if err != nil {
-		return err
-	}
 	if reflect.TypeOf(w) == reflect.TypeOf(new(os.File)) {
 		f := w.(*os.File)
 		path, err := filepath.Abs(f.Name())

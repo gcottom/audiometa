@@ -2,7 +2,6 @@ package audiometa
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"io"
 	"os"
@@ -15,13 +14,12 @@ import (
 func compareImages(src1 [][][3]float32, src2 [][][3]float32) bool {
 	dif := 0
 	for i, dat1 := range src1 {
-		for j, _ := range dat1 {
+		for j := range dat1 {
 			if len(src1[i][j]) != len(src2[i][j]) {
 				dif++
 			}
 		}
 	}
-	fmt.Println("difs:", dif)
 	return dif == 0
 }
 
@@ -1062,16 +1060,27 @@ func TestOggOpus(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
-
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
 		assert.NoError(t, err)
+
 		r = bytes.NewReader(buffy.Bytes())
 		tag, err = Open(r, ParseOptions{OGG})
 		assert.NoError(t, err)
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestWriteTagsOggOpusFromEmpty-file", func(t *testing.T) {
@@ -1091,6 +1100,9 @@ func TestOggOpus(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
@@ -1104,6 +1116,14 @@ func TestOggOpus(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist1")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestUpdateTagsOggOpus-buffers", func(t *testing.T) {
@@ -1128,6 +1148,9 @@ func TestOggOpus(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -1151,6 +1174,14 @@ func TestOggOpus(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 
 	t.Run("TestUpdateTagsOggOpus-file", func(t *testing.T) {
@@ -1170,6 +1201,9 @@ func TestOggOpus(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		tag.SetAlbumArtFromFilePath(p)
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
 
@@ -1195,5 +1229,13 @@ func TestOggOpus(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+		picFile, err := os.Open(p)
+		assert.NoError(t, err)
+		picData, _, err := image.Decode(picFile)
+		assert.NoError(t, err)
+		img1data := image_2_array_at(picData)
+		img2data := image_2_array_at(*tag.albumArt)
+
+		assert.True(t, compareImages(img1data, img2data))
 	})
 }
