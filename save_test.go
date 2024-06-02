@@ -118,7 +118,8 @@ func TestMP3(t *testing.T) {
 		tag.SetAlbum("TestAlbum1")
 		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
 		assert.NoError(t, err)
-		tag.SetAlbumArtFromFilePath(p)
+		err = tag.SetAlbumArtFromFilePath(p)
+		assert.NoError(t, err)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -159,8 +160,8 @@ func TestMP3(t *testing.T) {
 		tag.SetAlbum("TestAlbum1")
 		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
 		assert.NoError(t, err)
-		tag.SetAlbumArtFromFilePath(p)
-
+		err = tag.SetAlbumArtFromFilePath(p)
+		assert.NoError(t, err)
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
 

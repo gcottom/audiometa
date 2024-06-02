@@ -184,7 +184,10 @@ func saveFLAC(tag *IDTag, w io.Writer) error {
 	if err := cmts.Add(flac.FIELD_GENRE, tag.genre); err != nil {
 		return err
 	}
-	cmtsmeta := cmts.Marshal()
+	cmtsmeta, err := cmts.Marshal()
+	if err != nil {
+		return err
+	}
 	if fb.cmtIdx > 0 {
 		f.Meta = removeFLACMetaBlock(f.Meta, fb.cmtIdx)
 		f.Meta = append(f.Meta, &cmtsmeta)
@@ -206,7 +209,9 @@ func saveFLAC(tag *IDTag, w io.Writer) error {
 		}
 
 	}
-	r.Seek(0, io.SeekStart)
+	if _, err = r.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
 	return flacSave(r, w, f.Meta, needsTemp)
 }
 

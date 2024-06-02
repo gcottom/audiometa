@@ -305,6 +305,8 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 		}
 		return nil
 	}
-	wo.Write(ws.Bytes())
+	if _, err = wo.Write(ws.Bytes()); err != nil {
+		return err
+	}
 	return nil
 }

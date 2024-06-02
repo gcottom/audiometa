@@ -290,7 +290,8 @@ func TestAlbumArtTags(t *testing.T) {
 		err = jpeg.Encode(buf, decImg, nil)
 		assert.NoError(t, err)
 
-		tag.SetAlbumArtFromByteArray(buf.Bytes())
+		err = tag.SetAlbumArtFromByteArray(buf.Bytes())
+		assert.NoError(t, err)
 		picFile, err := os.Open(p)
 		assert.NoError(t, err)
 		picData, _, err := image.Decode(picFile)
@@ -342,8 +343,8 @@ func TestPassthroughOGG(t *testing.T) {
 
 		tag.SetAdditionalTag("testtag", "testvalue")
 		buffy := new(bytes.Buffer)
-		tag.Save(buffy)
-
+		err = tag.Save(buffy)
+		assert.NoError(t, err)
 		reader := bytes.NewReader(buffy.Bytes())
 		tag, err = parse(reader, ParseOptions{OGG})
 		assert.NoError(t, err)

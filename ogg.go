@@ -266,7 +266,9 @@ func (m *metadataVorbis) readVorbisComment(r io.Reader) (*IDTag, error) {
 		if err != nil {
 			return nil, err
 		}
-		m.readPictureBlock(bytes.NewReader(data))
+		if err = m.readPictureBlock(bytes.NewReader(data)); err != nil {
+			return nil, err
+		}
 	}
 	if len(m.p) > 0 {
 		if img, _, err := image.Decode(bytes.NewReader(m.p)); err == nil {

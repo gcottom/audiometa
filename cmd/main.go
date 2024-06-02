@@ -121,7 +121,9 @@ func main() {
 						} else if cmdTag == "alb" || cmdTag == "-alb" || cmdTag == "album" || cmdTag == "-album" {
 							tag.SetAlbum(writeTag)
 						} else if cmdTag == "c" || cmdTag == "-c" || cmdTag == "cover" || cmdTag == "-cover" {
-							tag.SetAlbumArtFromFilePath(writeTag)
+							if err := tag.SetAlbumArtFromFilePath(writeTag); err != nil {
+								fmt.Println(err)
+							}
 						} else if cmdTag == "comment" || cmdTag == "-comment" || cmdTag == "comments" || cmdTag == "-comments" {
 							tag.SetComments(writeTag)
 						} else if cmdTag == "composer" || cmdTag == "-composer" {

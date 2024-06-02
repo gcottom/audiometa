@@ -126,8 +126,13 @@ func readFLACHead(f io.Reader) error {
 	return nil
 }
 
-func packStr(w io.Writer, s string) {
+func packStr(w io.Writer, s string) error {
 	data := []byte(s)
-	w.Write(encodeUint32L(uint32(len(data))))
-	w.Write(data)
+	if _, err := w.Write(encodeUint32L(uint32(len(data)))); err != nil {
+		return err
+	}
+	if _, err := w.Write(data); err != nil {
+		return err
+	}
+	return nil
 }

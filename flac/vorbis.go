@@ -47,17 +47,21 @@ func (c *MetaDataBlockVorbisComment) Add(key string, val string) error {
 }
 
 // Marshal marshals this block back into a flac.MetaDataBlock
-func (c MetaDataBlockVorbisComment) Marshal() MetaDataBlock {
+func (c MetaDataBlockVorbisComment) Marshal() (MetaDataBlock, error) {
 	data := bytes.NewBuffer([]byte{})
-	packStr(data, c.Vendor)
+	if err := packStr(data, c.Vendor); err != nil {
+		return MetaDataBlock{}, err
+	}
 	data.Write(encodeUint32L(uint32(len(c.Comments))))
 	for _, cmt := range c.Comments {
-		packStr(data, cmt)
+		if err := packStr(data, cmt); err != nil {
+			return MetaDataBlock{}, err
+		}
 	}
 	return MetaDataBlock{
 		Type: VorbisComment,
 		Data: data.Bytes(),
-	}
+	}, nil
 }
 
 // ParseFromMetaDataBlock parses an existing picture MetaDataBlock
