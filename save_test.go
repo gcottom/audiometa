@@ -2,6 +2,7 @@ package audiometa
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func compareImages(src1 [][][3]float32, src2 [][][3]float32) bool {
@@ -1266,4 +1268,144 @@ func TestOggOpus(t *testing.T) {
 
 		assert.True(t, compareImages(img1data, img2data))
 	})
+}
+
+type saveMockReader struct {
+	mock.Mock
+}
+
+func (m *saveMockReader) Seek(offset int64, whence int) (int64, error) {
+	args := m.Called(offset, whence)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *saveMockReader) Read(p []byte) (int, error) {
+	args := m.Called(p)
+	return args.Int(0), args.Error(1)
+}
+
+type saveMockWriter struct {
+	mock.Mock
+}
+
+func (m *saveMockWriter) Write(p []byte) (int, error) {
+	args := m.Called(p)
+	return args.Int(0), args.Error(1)
+}
+
+func TestSave_SeekError(t *testing.T) {
+	mockReader := new(saveMockReader)
+	mockReader.On("Seek", int64(0), io.SeekStart).Return(int64(0), errors.New("seek error"))
+
+	tag := &IDTag{
+		reader: mockReader,
+	}
+
+	mockWriter := new(saveMockWriter)
+
+	err := tag.Save(mockWriter)
+	assert.EqualError(t, err, "seek error")
+	mockReader.AssertExpectations(t)
+}
+
+func TestSave_MP3Error(t *testing.T) {
+	mockReader := new(saveMockReader)
+	mockReader.On("Read", mock.Anything).Return(100, io.EOF)
+	mockReader.On("Seek", int64(0), io.SeekStart).Return(int64(0), nil)
+
+	tag := &IDTag{
+		fileType: "mp3",
+		reader:   mockReader,
+	}
+
+	mockWriter := new(saveMockWriter)
+	mockWriter.On("Write", mock.Anything).Return(0, errors.New("mp3 write error"))
+
+	err := tag.Save(mockWriter)
+	assert.EqualError(t, err, "mp3 write error")
+	mockWriter.AssertExpectations(t)
+}
+func TestSave_MP3ErrorRead(t *testing.T) {
+	mockReader := new(saveMockReader)
+	mockReader.On("Seek", int64(0), io.SeekStart).Return(int64(0), nil)
+	mockReader.On("Read", mock.Anything).Return(0, errors.New("read error"))
+
+	tag := &IDTag{
+		fileType: "mp3",
+		reader:   mockReader,
+	}
+
+	mockWriter := new(saveMockWriter)
+
+	err := tag.Save(mockWriter)
+	assert.EqualError(t, err, "read error")
+	mockWriter.AssertExpectations(t)
+}
+
+func TestSave_MP4Error(t *testing.T) {
+	mockReader := new(saveMockReader)
+	mockReader.On("Read", mock.Anything).Return(400, io.EOF)
+	mockReader.On("Seek", int64(0), mock.Anything).Return(int64(0), nil)
+
+	tag := &IDTag{
+		fileType: "m4a",
+		reader:   mockReader,
+	}
+
+	mockWriter := new(saveMockWriter)
+
+	err := tag.Save(mockWriter)
+	assert.Error(t, err, "mp4 write error")
+	mockWriter.AssertExpectations(t)
+}
+
+func TestSave_FLACError(t *testing.T) {
+	mockReader := new(saveMockReader)
+	mockReader.On("Read", mock.Anything).Return(400, io.EOF)
+	mockReader.On("Seek", int64(0), io.SeekStart).Return(int64(0), nil)
+
+	tag := &IDTag{
+		fileType: "flac",
+		reader:   mockReader,
+	}
+
+	mockWriter := new(saveMockWriter)
+
+	err := tag.Save(mockWriter)
+	assert.EqualError(t, err, "error parsing flac stream")
+	mockReader.AssertExpectations(t)
+}
+
+func TestSave_OGGError(t *testing.T) {
+	mockReader := new(saveMockReader)
+	mockReader.On("Read", mock.Anything).Return(156, io.EOF)
+	mockReader.On("Seek", int64(0), io.SeekStart).Return(int64(0), nil)
+
+	tag := &IDTag{
+		fileType: "ogg",
+		codec:    "vorbis",
+		reader:   mockReader,
+	}
+
+	mockWriter := new(saveMockWriter)
+
+	err := tag.Save(mockWriter)
+	assert.Error(t, err)
+	mockReader.AssertExpectations(t)
+}
+
+func TestSave_UnsupportedFileType(t *testing.T) {
+	mockReader := new(saveMockReader)
+	mockReader.On("Seek", int64(0), io.SeekStart).Return(int64(0), nil)
+
+	tag := &IDTag{
+		fileType: "UNKNOWN",
+		reader:   mockReader,
+	}
+
+	mockWriter := new(saveMockWriter)
+
+	err := tag.Save(mockWriter)
+	assert.EqualError(t, err, ErrNoMethodAvlble.Error())
+	mockReader.AssertExpectations(t)
 }
