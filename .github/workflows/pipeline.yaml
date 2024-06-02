@@ -1,26 +1,31 @@
+name: Build, Test and Deploy
+
 on:
-    push:
-      branches:
-        - main
+  push:
+    branches:
+      - '**'
+
 jobs:
-    build-deploy:
-        runs-on: ubuntu-latest
-        steps:
-        - name: Set up Go
-          uses: actions/setup-go@v2
-          with:
-            go-version: '1.18'
-        - name: Checkout Repo
-          id: checkout_repo
-          uses: actions/checkout@v3
-        - name: do_go_mod_tidy
-          run: go mod tidy
-        - name: Run Unit tests
-          run: |
-            go test -race -covermode atomic -coverprofile=covprofile ./...
-        - name: Install goveralls
-          run: go install github.com/mattn/goveralls@latest
-        - name: Send coverage
-          env:
-            COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
-          run: goveralls -coverprofile=covprofile -service=github
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.18'
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Fetch Dependencies
+        run: go mod download
+      - name: Golangci-lint
+        uses: golangci/golangci-lint-action@v6.0.1
+      - name: Run Unit tests
+        run: go test -race -covermode atomic -coverprofile=covprofile ./...
+      - name: Install goveralls
+        if: github.ref == 'refs/heads/main'
+        run: go install github.com/mattn/goveralls@latest
+      - name: Send coverage
+        if: github.ref == 'refs/heads/main'
+        env:
+          COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+        run: goveralls -coverprofile=covprofile -service=github
