@@ -40,9 +40,6 @@ var atoms = atomNames(map[string]string{
 	"disk":    "disc",
 })
 
-// Detect PNG image if "implicit" class is used
-var pngHeader = []byte{137, 80, 78, 71, 13, 10, 26, 10}
-
 type atomNames map[string]string
 
 func (f atomNames) name(n string) []string {

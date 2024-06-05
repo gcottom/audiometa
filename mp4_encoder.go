@@ -153,7 +153,10 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 			return nil, nil
 
 		case mp4.BoxTypeMeta():
-			w.StartBox(&h.BoxInfo)
+			_, err := w.StartBox(&h.BoxInfo)
+			if err != nil {
+				return nil, err
+			}
 			box, _, err := h.ReadPayload()
 			if err != nil {
 				return nil, err
@@ -165,7 +168,10 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 
 		case mp4.BoxTypeMoov(),
 			mp4.BoxTypeUdta():
-			w.StartBox(&h.BoxInfo)
+			_, err := w.StartBox(&h.BoxInfo)
+			if err != nil {
+				return nil, err
+			}
 			box, _, err := h.ReadPayload()
 			if err != nil {
 				return nil, err
