@@ -164,9 +164,7 @@ func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, pro
 
 	if contentType == "implicit" {
 		if name == "covr" {
-			if bytes.HasPrefix(b, pngHeader) {
-				contentType = "png"
-			}
+			contentType = "png"
 		}
 	}
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
-	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
@@ -83,7 +82,6 @@ func OggPageChecksumSet(og *oggPage) {
 		var crcReg uint32
 		buf := make([]byte, 4)
 		og.Header.CRC = uint32(0)
-		// Safety; needed for API behavior, but not framing code
 		buf[0] = 0
 		buf[1] = 0
 		buf[2] = 0
@@ -110,7 +108,6 @@ type oggDemuxer struct {
 func (o *oggDemuxer) read(r io.Reader) ([][]byte, error) {
 	var oh oggPageHeader
 	if err := binary.Read(r, binary.LittleEndian, &oh); err != nil {
-		fmt.Println("Error in binary read")
 		return nil, err
 	}
 
@@ -120,7 +117,6 @@ func (o *oggDemuxer) read(r io.Reader) ([][]byte, error) {
 
 	segmentTable := make([]byte, oh.Segments)
 	if _, err := io.ReadFull(r, segmentTable); err != nil {
-		fmt.Println("Error in segment table")
 		return nil, err
 	}
 	var segmentsSize int64
@@ -129,7 +125,6 @@ func (o *oggDemuxer) read(r io.Reader) ([][]byte, error) {
 	}
 	segmentsData := make([]byte, segmentsSize)
 	if _, err := io.ReadFull(r, segmentsData); err != nil {
-		fmt.Println("Error in segments data")
 		return nil, err
 	}
 
@@ -172,7 +167,6 @@ func readOggTags(r io.Reader) (*IDTag, error) {
 	for {
 		bs, err := od.read(r)
 		if err != nil {
-			fmt.Println("error in read function")
 			return nil, err
 		}
 

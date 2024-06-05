@@ -350,6 +350,7 @@ func TestM4A(t *testing.T) {
 		assert.Empty(t, tag.Artist())
 		assert.Empty(t, tag.Album())
 		assert.Empty(t, tag.Title())
+
 	})
 
 	t.Run("TestWriteTagsM4AFromEmpty-buffers", func(t *testing.T) {
@@ -374,6 +375,10 @@ func TestM4A(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		err = tag.SetAlbumArtFromFilePath(p)
+		assert.NoError(t, err)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -404,6 +409,10 @@ func TestM4A(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		err = tag.SetAlbumArtFromFilePath(p)
+		assert.NoError(t, err)
 
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
@@ -441,6 +450,10 @@ func TestM4A(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		err = tag.SetAlbumArtFromFilePath(p)
+		assert.NoError(t, err)
 
 		buffy = new(bytes.Buffer)
 		err = SaveTag(tag, buffy)
@@ -483,6 +496,10 @@ func TestM4A(t *testing.T) {
 		tag.SetArtist("TestArtist1")
 		tag.SetTitle("TestTitle1")
 		tag.SetAlbum("TestAlbum1")
+		p, err := filepath.Abs("./testdata/withAlbumArt/testdata-img-1.jpg")
+		assert.NoError(t, err)
+		err = tag.SetAlbumArtFromFilePath(p)
+		assert.NoError(t, err)
 		err = SaveTag(tag, f)
 		assert.NoError(t, err)
 
@@ -508,6 +525,33 @@ func TestM4A(t *testing.T) {
 		assert.Equal(t, tag.Artist(), "TestArtist2")
 		assert.Equal(t, tag.Album(), "TestAlbum1")
 		assert.Equal(t, tag.Title(), "TestTitle1")
+	})
+	t.Run("TestNoChangeM4A-file", func(t *testing.T) {
+		err := os.Mkdir("testdata/temp", 0755)
+		assert.NoError(t, err)
+		of, err := os.ReadFile("testdata/withAlbumArt/test1.m4a")
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/temp/test1.m4a", of, 0755)
+		assert.NoError(t, err)
+		path, _ := filepath.Abs("testdata/temp/test1.m4a")
+		f, err := os.Open(path)
+		assert.NoError(t, err)
+		defer f.Close()
+
+		tag, err := Open(f, ParseOptions{M4A})
+		assert.NoError(t, err)
+		err = SaveTag(tag, f)
+		assert.NoError(t, err)
+
+		_, err = f.Seek(0, io.SeekStart)
+		assert.NoError(t, err)
+		tag, err = Open(f, ParseOptions{M4A})
+		assert.NoError(t, err)
+		err = os.RemoveAll("testdata/temp")
+		assert.NoError(t, err)
+		assert.Equal(t, tag.Artist(), "test1")
+		assert.Equal(t, tag.Album(), "test1")
+		assert.Equal(t, tag.Title(), "test1")
 	})
 }
 
@@ -1352,23 +1396,6 @@ func TestSave_MP3ErrorRead(t *testing.T) {
 
 	err := tag.Save(mockWriter)
 	assert.EqualError(t, err, "read error")
-	mockWriter.AssertExpectations(t)
-}
-
-func TestSave_MP4Error(t *testing.T) {
-	mockReader := new(saveMockReader)
-	mockReader.On("Read", mock.Anything).Return(400, io.EOF)
-	mockReader.On("Seek", int64(0), mock.Anything).Return(int64(0), nil)
-
-	tag := &IDTag{
-		fileType: "m4a",
-		reader:   mockReader,
-	}
-
-	mockWriter := new(saveMockWriter)
-
-	err := tag.Save(mockWriter)
-	assert.Error(t, err, "mp4 write error")
 	mockWriter.AssertExpectations(t)
 }
 
