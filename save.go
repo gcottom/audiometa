@@ -159,7 +159,11 @@ func saveMP4(tag *IDTag, w io.Writer) error {
 			delete = append(delete, fieldName)
 		}
 	}
-	r := bufseekio.NewReadSeeker(tag.reader, 128*1024, 4)
+	data, err := io.ReadAll(tag.reader)
+	if err != nil {
+		return err
+	}
+	r := bufseekio.NewReadSeeker(bytes.NewReader(data), 128*1024, 4)
 	return writeMP4(r, w, tag, delete)
 
 }

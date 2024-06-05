@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 
 	"github.com/abema/go-mp4"
 	"github.com/aler9/writerseeker"
@@ -27,177 +26,67 @@ var atomsMap = map[string]mp4.BoxType{
 	"year":         {'\251', 'd', 'a', 'y'},
 }
 
-func mp4copy(w *mp4.Writer, h *mp4.ReadHandle) error {
-	if _, err := w.StartBox(&h.BoxInfo); err != nil {
-		return err
-	}
-	box, _, err := h.ReadPayload()
-	if err != nil {
-		return err
-	}
-	if _, err = mp4.Marshal(w, box, h.BoxInfo.Context); err != nil {
-		return err
-	}
-	if _, err = h.Expand(); err != nil {
-		return err
-	}
-	_, err = w.EndBox()
-	return err
-}
-
-// See which atoms don't already exist and will need creating.
-func populateAtoms(f io.ReadSeeker, _tags *IDTag) (map[string]bool, error) {
-	ilst, err := mp4.ExtractBox(
-		f, nil, mp4.BoxPath{mp4.BoxTypeMoov(), mp4.BoxTypeUdta(), mp4.BoxTypeMeta(), mp4.BoxTypeIlst()})
-	if err != nil {
-		return nil, err
-	}
-	if len(ilst) == 0 {
-		return nil, ErrMP4IlstAtomMissing
-	}
-	atoms := map[string]bool{}
-	fields := reflect.VisibleFields(reflect.TypeOf(*_tags))
-	for _, field := range fields {
-		fieldName := field.Name
-		if fieldName == "Custom" {
-			continue
-		}
-		boxType, ok := atomsMap[fieldName]
-		if !ok {
-			continue
-		}
-		boxes, err := mp4.ExtractBox(
-			f, nil, mp4.BoxPath{mp4.BoxTypeMoov(), mp4.BoxTypeUdta(), mp4.BoxTypeMeta(), mp4.BoxTypeIlst(), boxType})
-		if err != nil {
-			return nil, err
-		}
-		atoms[fieldName] = len(boxes) == 0
-	}
-	return atoms, nil
-}
-
-func marshalData(w *mp4.Writer, ctx mp4.Context, val interface{}) error {
-	_, err := w.StartBox(&mp4.BoxInfo{Type: mp4.BoxTypeData()})
-	if err != nil {
-		return err
-	}
-	var boxData mp4.Data
-	switch v := val.(type) {
-	case string:
-		boxData.DataType = mp4.DataTypeStringUTF8
-		boxData.Data = []byte(v)
-	case []byte:
-		boxData.DataType = mp4.DataTypeBinary
-		boxData.Data = v
-	}
-	_, err = mp4.Marshal(w, &boxData, ctx)
-	if err != nil {
-		return err
-	}
-	_, err = w.EndBox()
-	return err
-}
-
-func writeMeta(w *mp4.Writer, tag mp4.BoxType, ctx mp4.Context, val interface{}) error {
-	_, err := w.StartBox(&mp4.BoxInfo{Type: tag})
-	if err != nil {
-		return err
-	}
-	err = marshalData(w, ctx, val)
-	if err != nil {
-		return err
-	}
-	_, err = w.EndBox()
-	return err
-}
-
 // Make new atoms and write to.
-func createAndWrite(h *mp4.ReadHandle, w *mp4.Writer, ctx mp4.Context, _tags *IDTag, atoms map[string]bool) error {
-	if _, err := w.StartBox(&h.BoxInfo); err != nil {
-		return err
-	}
-	box, _, err := h.ReadPayload()
-	if err != nil {
-		return err
-	}
-	if _, err = mp4.Marshal(w, box, h.BoxInfo.Context); err != nil {
-		return err
-	}
-	if _tags.albumArt != nil {
-		buf := new(bytes.Buffer)
-		if err := png.Encode(buf, *_tags.albumArt); err != nil {
-			if err := writeMeta(w, atomsMap["albumArt"], ctx, buf.Bytes()); err != nil {
-				return err
-			}
-		}
-	}
-	for tagName, needCreate := range atoms {
+func createAndWrite(w *mp4.Writer, ctx mp4.Context, _tags *IDTag) error {
+	for tagName, boxType := range atomsMap {
 		if tagName == "albumArt" {
+			if _tags.albumArt != nil {
+				buf := new(bytes.Buffer)
+				if err := png.Encode(buf, *_tags.albumArt); err == nil {
+					if _, err := w.StartBox(&mp4.BoxInfo{Type: boxType}); err != nil {
+						return err
+					}
+					if _, err := w.StartBox(&mp4.BoxInfo{Type: mp4.BoxTypeData()}); err != nil {
+						return err
+					}
+					var boxData = &mp4.Data{
+						DataType: mp4.DataTypeBinary,
+						Data:     buf.Bytes(),
+					}
+					dataCtx := ctx
+					dataCtx.UnderIlstMeta = true
+					if _, err := mp4.Marshal(w, boxData, dataCtx); err != nil {
+						return err
+					}
+					if _, err := w.EndBox(); err != nil {
+						return err
+					}
+					if _, err := w.EndBox(); err != nil {
+						return err
+					}
+				}
+			}
 			continue
 		}
 		val := reflect.ValueOf(*_tags).FieldByName(tagName).String()
-		if !needCreate || val == "" {
+		if val == "" {
 			continue
 		}
-		boxType := atomsMap[tagName]
-		if err = writeMeta(w, boxType, ctx, val); err != nil {
+
+		if _, err := w.StartBox(&mp4.BoxInfo{Type: boxType}); err != nil {
+			return err
+		}
+		if _, err := w.StartBox(&mp4.BoxInfo{Type: mp4.BoxTypeData()}); err != nil {
+			return err
+		}
+		var boxData = &mp4.Data{
+			DataType: mp4.DataTypeStringUTF8,
+			Data:     []byte(val),
+		}
+		dataCtx := ctx
+		dataCtx.UnderIlstMeta = true
+		if _, err := mp4.Marshal(w, boxData, dataCtx); err != nil {
+			return err
+		}
+		if _, err := w.EndBox(); err != nil {
+			return err
+		}
+		if _, err := w.EndBox(); err != nil {
 			return err
 		}
 	}
-	if _, err = h.Expand(); err != nil {
-		return err
-	}
-	_, err = w.EndBox()
-	return err
-}
+	return nil
 
-func writeExisting(h *mp4.ReadHandle, w *mp4.Writer, _tags *IDTag, currentKey string) (bool, error) {
-	if currentKey == "albumArt" && _tags.albumArt == nil {
-		return true, nil
-	}
-	if currentKey == "albumArt" && _tags.albumArt != nil {
-		if _, err := w.StartBox(&h.BoxInfo); err != nil {
-			return false, err
-		}
-		box, _, err := h.ReadPayload()
-		if err != nil {
-			return false, err
-		}
-		data := box.(*mp4.Data)
-		data.DataType = mp4.DataTypeBinary
-		buf := new(bytes.Buffer)
-		if err := png.Encode(buf, *_tags.albumArt); err != nil {
-			data.Data = buf.Bytes()
-		}
-		if _, err = mp4.Marshal(w, data, h.BoxInfo.Context); err != nil {
-			return false, err
-		}
-		if _, err = w.EndBox(); err != nil {
-			return false, err
-		}
-	} else {
-		toWrite := reflect.ValueOf(*_tags).FieldByName(currentKey).String()
-		if toWrite == "" {
-			return true, nil
-		}
-		if _, err := w.StartBox(&h.BoxInfo); err != nil {
-			return false, err
-		}
-		box, _, err := h.ReadPayload()
-		if err != nil {
-			return false, err
-		}
-		data := box.(*mp4.Data)
-		data.DataType = mp4.DataTypeStringUTF8
-		data.Data = []byte(toWrite)
-		if _, err = mp4.Marshal(w, data, h.BoxInfo.Context); err != nil {
-			return false, err
-		}
-		_, err = w.EndBox()
-		return false, err
-
-	}
-	return false, nil
 }
 
 func containsAtom(boxType mp4.BoxType, boxes []mp4.BoxType) mp4.BoxType {
@@ -209,24 +98,6 @@ func containsAtom(boxType mp4.BoxType, boxes []mp4.BoxType) mp4.BoxType {
 	return mp4.BoxType{}
 }
 
-func containsTag(delete []string, currentTag string) bool {
-	for _, tag := range delete {
-		if strings.EqualFold(tag, currentTag) {
-			return true
-		}
-	}
-	return false
-}
-
-func getTag(boxType mp4.BoxType) string {
-	for k, v := range atomsMap {
-		if v == boxType {
-			return k
-		}
-	}
-	return ""
-}
-
 func getAtomsList() []mp4.BoxType {
 	var atomsList []mp4.BoxType
 	for _, atom := range atomsMap {
@@ -236,56 +107,165 @@ func getAtomsList() []mp4.BoxType {
 }
 
 func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Delete) error {
-	var currentKey string
-	ctx := mp4.Context{UnderIlstMeta: true}
 	atomsList := getAtomsList()
 
 	ws := &writerseeker.WriterSeeker{}
 	defer ws.Close()
-	atoms, err := populateAtoms(r, _tags)
+
+	w := mp4.NewWriter(ws)
+	var mdatOffsetDiff int64
+	var stcoOffsets []int64
+	closedTags := false
+
+	_, err := mp4.ReadBoxStructure(r, func(h *mp4.ReadHandle) (interface{}, error) {
+		switch h.BoxInfo.Type {
+
+		case containsAtom(h.BoxInfo.Type, atomsList):
+			return nil, nil
+
+		case mp4.BoxTypeFree():
+			if !closedTags {
+				_, err := w.EndBox()
+				if err != nil {
+					return nil, err
+				}
+				if err := w.CopyBox(r, &h.BoxInfo); err != nil {
+					return nil, err
+				}
+				_, err = w.EndBox()
+				if err != nil {
+					return nil, err
+				}
+				_, err = w.EndBox()
+				if err != nil {
+					return nil, err
+				}
+				_, err = w.EndBox()
+				if err != nil {
+					return nil, err
+				}
+				closedTags = true
+				return nil, nil
+			}
+			if err := w.CopyBox(r, &h.BoxInfo); err != nil {
+				return nil, err
+			}
+			return nil, nil
+
+		case mp4.BoxTypeMeta():
+			_, err := w.StartBox(&h.BoxInfo)
+			if err != nil {
+				return nil, err
+			}
+			box, _, err := h.ReadPayload()
+			if err != nil {
+				return nil, err
+			}
+			if _, err = mp4.Marshal(w, box, h.BoxInfo.Context); err != nil {
+				return nil, err
+			}
+			return h.Expand()
+
+		case mp4.BoxTypeMoov(),
+			mp4.BoxTypeUdta():
+			_, err := w.StartBox(&h.BoxInfo)
+			if err != nil {
+				return nil, err
+			}
+			box, _, err := h.ReadPayload()
+			if err != nil {
+				return nil, err
+			}
+			if _, err = mp4.Marshal(w, box, h.BoxInfo.Context); err != nil {
+				return nil, err
+			}
+			return h.Expand()
+
+		case mp4.BoxTypeIlst():
+			_, err := w.StartBox(&h.BoxInfo)
+			if err != nil {
+				return nil, err
+			}
+			ctx := h.BoxInfo.Context
+			if err = createAndWrite(w, ctx, _tags); err != nil {
+				return nil, err
+			}
+			return h.Expand()
+
+		default:
+			if h.BoxInfo.Type == mp4.BoxTypeStco() {
+				offset, _ := w.Seek(0, io.SeekCurrent)
+				stcoOffsets = append(stcoOffsets, offset)
+			}
+			if h.BoxInfo.Type == mp4.BoxTypeMdat() {
+				iOffset := int64(h.BoxInfo.Offset)
+				oOffset, _ := w.Seek(0, io.SeekCurrent)
+				mdatOffsetDiff = oOffset - iOffset
+			}
+			if err := w.CopyBox(r, &h.BoxInfo); err != nil {
+				return nil, err
+			}
+		}
+		return nil, nil
+	})
 	if err != nil {
 		return err
 	}
-	w := mp4.NewWriter(ws)
-	if _, err = mp4.ReadBoxStructure(r, func(h *mp4.ReadHandle) (interface{}, error) {
+
+	ts := bufseekio.NewReadSeeker(bytes.NewReader(ws.Bytes()), 1024*1024, 3)
+
+	_, err = mp4.ReadBoxStructure(ts, func(h *mp4.ReadHandle) (any, error) {
 		switch h.BoxInfo.Type {
-		case mp4.BoxTypeMoov(), mp4.BoxTypeUdta(), mp4.BoxTypeMeta():
-			err := mp4copy(w, h)
-			return nil, err
-		case mp4.BoxTypeIlst():
-			err := createAndWrite(h, w, ctx, _tags, atoms)
-			return nil, err
-		case containsAtom(h.BoxInfo.Type, atomsList):
-			if h.BoxInfo.Type == atomsMap["albumArt"] && _tags.albumArt != nil {
-				return nil, nil
-			}
-			currentKey = getTag(h.BoxInfo.Type)
-			if containsTag(delete, currentKey) {
-				return nil, nil
-			}
-			err = mp4copy(w, h)
-			return nil, err
-		case mp4.BoxTypeData():
-			if currentKey == "" {
-				return nil, w.CopyBox(r, &h.BoxInfo)
-			}
-			if !atoms[currentKey] {
-				valEmpty, err := writeExisting(h, w, _tags, currentKey)
-				currentKey = ""
-				if err != nil {
-					return nil, err
-				} else if valEmpty {
-					return nil, w.CopyBox(r, &h.BoxInfo)
-				}
-			}
-			return nil, nil
+		case mp4.BoxTypeStco():
+			stcoOffsets = append(stcoOffsets, int64(h.BoxInfo.Offset))
 		default:
-			return nil, w.CopyBox(r, &h.BoxInfo)
+			return h.Expand()
 		}
-	}); err != nil {
+		return nil, nil
+	})
+	if err != nil {
 		return err
 	}
 
+	if _, err = ws.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+	// if mdat box is moved, update stco box
+	if mdatOffsetDiff != 0 {
+		for _, stcoOffset := range stcoOffsets {
+			// seek to stco box header
+			if _, err := ts.Seek(stcoOffset, io.SeekStart); err != nil {
+				return err
+			}
+			// read box header
+			bi, err := mp4.ReadBoxInfo(ts)
+			if err != nil {
+				return err
+			}
+			// read stco box payload
+			var stco mp4.Stco
+			_, err = mp4.Unmarshal(ts, bi.Size-bi.HeaderSize, &stco, bi.Context)
+			if err != nil {
+				return err
+			}
+			// update chunk offsets
+			for i := range stco.ChunkOffset {
+				stco.ChunkOffset[i] += uint32(mdatOffsetDiff)
+			}
+			// seek to stco box payload
+			_, err = bi.SeekToPayload(ws)
+			if err != nil {
+				return err
+			}
+			// write stco box payload
+			if _, err := mp4.Marshal(ws, &stco, bi.Context); err != nil {
+				return err
+			}
+		}
+	}
+	if _, err = ws.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
 	if reflect.TypeOf(wo) == reflect.TypeOf(new(os.File)) {
 		f := wo.(*os.File)
 		path, err := filepath.Abs(f.Name())
@@ -305,8 +285,9 @@ func writeMP4(r *bufseekio.ReadSeeker, wo io.Writer, _tags *IDTag, delete MP4Del
 		}
 		return nil
 	}
-	if _, err = wo.Write(ws.Bytes()); err != nil {
+	if _, err := wo.Write(ws.Bytes()); err != nil {
 		return err
 	}
 	return nil
+
 }
