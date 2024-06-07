@@ -10,7 +10,9 @@ import (
 
 func main() {
 	args := os.Args[1:]
+	fmt.Println(args)
 	if len(args) > 1 && args[0] == "." {
+		fmt.Println(args)
 		args = args[1:]
 	}
 	if len(args) >= 1 {
@@ -19,6 +21,8 @@ func main() {
 			file = args[1]
 		}
 		mode := strings.ToLower(args[0])
+		fmt.Println(mode)
+		fmt.Println(len(args) % 2)
 		if len(args)%2 == 0 && len(args) != 1 {
 			if mode == "p" || mode == "parse" || mode == "r" || mode == "read" || mode == "-p" || mode == "-parse" || mode == "-r" || mode == "-read" {
 				tag, err := audiometa.OpenTagFromPath(file)
@@ -185,14 +189,14 @@ func main() {
 				} else if args[1] == "c" || args[1] == "e" || args[1] == "clear" || args[1] == "empty" || args[1] == "-c" || args[1] == "-e" || args[1] == "-clear" || args[1] == "-empty" {
 					fmt.Println("mp3-mp4-tag-cmd-help: Clear(Empty) mode\nThe clear mode clears all of the tags in the file and saves the file with empty tags. You can use this mode to clear all tags of a file and then use the write mode to write all new tags to the file.\nex usage: mp3-mp4-tag clear filepath.mp3")
 				}
-			} else {
-				if len(args) == 1 && args[0] == "h" || args[0] == "-h" || args[0] == "-help" || args[0] == "help" {
-					fmt.Println("mp3-mp4-tag-cmd-help: The application offers 3 modes: read, write, and clear. Use the command \"help\" followed by a mode to learn more about its usage.")
-				} else {
-					fmt.Println("Invalid number of arguments!\nmp3-mp4-tag-cmd-help: The application offers 3 modes: read, write, and clear. Use the command \"help\" followed by a mode to learn more about its usage.")
-				}
-
 			}
+		} else {
+			if len(args) == 1 && args[0] == "h" || args[0] == "-h" || args[0] == "-help" || args[0] == "help" {
+				fmt.Println("mp3-mp4-tag-cmd-help: The application offers 3 modes: read, write, and clear. Use the command \"help\" followed by a mode to learn more about its usage.")
+			} else {
+				fmt.Println("Invalid number of arguments!\nmp3-mp4-tag-cmd-help: The application offers 3 modes: read, write, and clear. Use the command \"help\" followed by a mode to learn more about its usage.")
+			}
+
 		}
 	}
 }
