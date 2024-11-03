@@ -1,11 +1,11 @@
 module github.com/gcottom/audiometa/v3
 
-go 1.22.3
+go 1.18
 
 require (
 	github.com/gcottom/mp3meta v0.0.1
 	github.com/gcottom/mp4meta v0.0.2
-	github.com/gcottom/oggmeta v0.0.4
+	github.com/gcottom/oggmeta v0.0.5
 )
 
 require (

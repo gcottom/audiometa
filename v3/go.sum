@@ -12,12 +12,8 @@ github.com/gcottom/mp3meta v0.0.1 h1:wM4iemx1RZCmUG3ptSbNWGxhU0tyWtW8PPsRxYfitEs
 github.com/gcottom/mp3meta v0.0.1/go.mod h1:mYnE1j3llRiBHrEbLE57NVGIia4qfXoCShXuFkWv5+s=
 github.com/gcottom/mp4meta v0.0.2 h1:RW8p6zyMetPz6KIhzHD1EHJu+KN0GnrHxoLH9p6Z9eA=
 github.com/gcottom/mp4meta v0.0.2/go.mod h1:qstBsqczbFF1e90C828qv966Xjx/LFPjWQITARCpyfA=
-github.com/gcottom/oggmeta v0.0.2 h1:2n+sDrqU2kAZp7S2EozIhS1UeA+fAkP+KPbp+Yhfipo=
-github.com/gcottom/oggmeta v0.0.2/go.mod h1:wbB09KZ3SSLMZqYGZ+cymuB7LAIK4n0zdLjJA/BCBTw=
-github.com/gcottom/oggmeta v0.0.3 h1:xc3Odi/3/wXMRI1Lfy1dyyTd91DwrrGJSObwL4skqUM=
-github.com/gcottom/oggmeta v0.0.3/go.mod h1:wbB09KZ3SSLMZqYGZ+cymuB7LAIK4n0zdLjJA/BCBTw=
-github.com/gcottom/oggmeta v0.0.4 h1:GMn5sxS7K1YzCxVAGqlY6NxjV+/y9di9kJU/wtfOyRM=
-github.com/gcottom/oggmeta v0.0.4/go.mod h1:wbB09KZ3SSLMZqYGZ+cymuB7LAIK4n0zdLjJA/BCBTw=
+github.com/gcottom/oggmeta v0.0.5 h1:sxeyKmNElLbly2gYRD57GEQ8tEwgMGOCcqQtrQHcpiM=
+github.com/gcottom/oggmeta v0.0.5/go.mod h1:ifdINhphaEW587BIgA+m5TJwCoVk88JuZMCHwXc/gpM=
 github.com/google/uuid v1.1.2 h1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
@@ -30,10 +26,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.5.2 h1:xuMeJ0Sdp5ZMRXx/aWO6RZxdr3beISkG5/G/aIRr3pY=
-github.com/stretchr/objx v0.5.2/go.mod h1:FRsXN1f5AsAjCGJKqEizvkpNtU+EGNCLh3NxZ/8L+MA=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
-github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/sunfish-shogi/bufseekio v0.0.0-20210207115823-a4185644b365/go.mod h1:dEzdXgvImkQ3WLI+0KQpmEx8T/C/ma9KeS3AfmU899I=
 github.com/sunfish-shogi/bufseekio v0.1.0 h1:zu38kFbv0KuuiwZQeuYeS02U9AM14j0pVA9xkHOCJ2A=
 github.com/sunfish-shogi/bufseekio v0.1.0/go.mod h1:dEzdXgvImkQ3WLI+0KQpmEx8T/C/ma9KeS3AfmU899I=
@@ -71,4 +65,3 @@ gopkg.in/src-d/go-billy.v4 v4.3.2/go.mod h1:nDjArDMp+XMs1aFAESLRjfGSgfvoYN0hDfzE
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
-gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
