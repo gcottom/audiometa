@@ -5,7 +5,9 @@ import (
 	"image"
 	"io"
 
-	"github.com/gcottom/audiometa/mp3/v3"
+	"github.com/gcottom/mp3meta"
+	"github.com/gcottom/mp4meta"
+	"github.com/gcottom/oggmeta"
 )
 
 type Tag interface {
@@ -53,13 +55,13 @@ func OpenTag(r io.ReadSeeker) (Tag, error) {
 
 	switch {
 	case string(b[0:3]) == "ID3":
-		return mp3.ParseMP3(r)
+		return mp3meta.ParseMP3(r)
 	case string(b[4:8]) == "ftyp":
-		return mp4.parseMP4(r)
+		return mp4meta.ReadMP4(r)
 	case string(b[0:4]) == "fLaC":
-		return //flac reader
+		//return //flac reader
 	case string(b[0:4]) == "OggS":
-		return //ogg reader
+		return oggmeta.ReadOGG(r)
 	}
 
 }

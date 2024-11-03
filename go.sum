@@ -8,6 +8,14 @@ github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7Do
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/gcottom/mp3meta v0.0.1 h1:wM4iemx1RZCmUG3ptSbNWGxhU0tyWtW8PPsRxYfitEs=
+github.com/gcottom/mp3meta v0.0.1/go.mod h1:mYnE1j3llRiBHrEbLE57NVGIia4qfXoCShXuFkWv5+s=
+github.com/gcottom/mp4meta v0.0.2 h1:RW8p6zyMetPz6KIhzHD1EHJu+KN0GnrHxoLH9p6Z9eA=
+github.com/gcottom/mp4meta v0.0.2/go.mod h1:qstBsqczbFF1e90C828qv966Xjx/LFPjWQITARCpyfA=
+github.com/gcottom/oggmeta v0.0.1 h1:EVHIQzfyjg+YLFXc1GGlK9vIdzniIIvZkaGdh4Ig/j0=
+github.com/gcottom/oggmeta v0.0.1/go.mod h1:wbB09KZ3SSLMZqYGZ+cymuB7LAIK4n0zdLjJA/BCBTw=
+github.com/gcottom/oggmeta v0.0.2 h1:2n+sDrqU2kAZp7S2EozIhS1UeA+fAkP+KPbp+Yhfipo=
+github.com/gcottom/oggmeta v0.0.2/go.mod h1:wbB09KZ3SSLMZqYGZ+cymuB7LAIK4n0zdLjJA/BCBTw=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
