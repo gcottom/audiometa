@@ -16,7 +16,9 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Fetch Dependencies
-        run: go mod download
+        run: |
+          cd v3
+          go mod download
       - name: Golangci-lint
         uses: golangci/golangci-lint-action@v6.0.1
       - name: Run Unit tests
