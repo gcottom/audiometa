@@ -1,10 +1,12 @@
 package audiometa
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"io"
 
+	"github.com/gcottom/flacmeta"
 	"github.com/gcottom/mp3meta"
 	"github.com/gcottom/mp4meta"
 	"github.com/gcottom/oggmeta"
@@ -59,9 +61,11 @@ func OpenTag(r io.ReadSeeker) (Tag, error) {
 	case string(b[4:8]) == "ftyp":
 		return mp4meta.ReadMP4(r)
 	case string(b[0:4]) == "fLaC":
-		//return //flac reader
+		return flacmeta.ReadFLAC(r)
 	case string(b[0:4]) == "OggS":
 		return oggmeta.ReadOGG(r)
+	default:
+		return nil, errors.New("unsupported file type")
 	}
 
 }

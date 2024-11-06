@@ -2,33 +2,8 @@ package audiometa
 
 import (
 	"bytes"
-	"encoding/binary"
 	"io"
 )
-
-func getInt(b []byte) int {
-	var n int
-	for _, x := range b {
-		n = n << 8
-		n |= int(x)
-	}
-	return n
-}
-func readInt(r io.Reader, n uint) (int, error) {
-	b, err := readBytes(r, n)
-	if err != nil {
-		return 0, err
-	}
-	return getInt(b), nil
-}
-
-func readUint(r io.Reader, n uint) (uint, error) {
-	x, err := readInt(r, n)
-	if err != nil {
-		return 0, err
-	}
-	return uint(x), nil
-}
 
 // readBytesMaxUpfront is the max up-front allocation allowed
 const readBytesMaxUpfront = 10 << 20 // 10MB
@@ -48,26 +23,4 @@ func readBytes(r io.Reader, n uint) ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
-}
-
-func readString(r io.Reader, n uint) (string, error) {
-	b, err := readBytes(r, n)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-func readUint32LittleEndian(r io.Reader) (uint32, error) {
-	b, err := readBytes(r, 4)
-	if err != nil {
-		return 0, err
-	}
-	return binary.LittleEndian.Uint32(b), nil
-}
-func encodeUint32(n uint32) []byte {
-	buf := bytes.NewBuffer([]byte{})
-	if err := binary.Write(buf, binary.BigEndian, n); err != nil {
-		panic(err)
-	}
-	return buf.Bytes()
 }
