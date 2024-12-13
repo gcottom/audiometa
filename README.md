@@ -10,3 +10,9 @@ audiometa is the final piece that ties several projects together with a simple i
 
 ## Improvements
 This version ties together bug fixes in almost every module. Improvements in performance and memory usage along with tons of optimization and testing in each package. Check the CHANGLOG for a comprehensive list of changes. 
+
+## Related Projects
+[mp3meta](https://github.com/gcottom/mp3meta)
+[mp4meta](https://github.com/gcottom/mp4meta)
+[oggmeta](https://github.com/gcottom/oggmeta)
+[flacmeta](https://github.com/gcottom/flacmeta)
