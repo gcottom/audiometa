@@ -13,6 +13,9 @@ This version ties together bug fixes in almost every module. Improvements in per
 
 ## Related Projects
 [mp3meta](https://github.com/gcottom/mp3meta)
+
 [mp4meta](https://github.com/gcottom/mp4meta)
+
 [oggmeta](https://github.com/gcottom/oggmeta)
+
 [flacmeta](https://github.com/gcottom/flacmeta)
