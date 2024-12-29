@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.0.1]-[3.0.3] - 2024-12-29
+### audiometa
+- Use latest dependency versions
+
+### MP3
+- Update README
+- Merge PR from LaptopCat to remove unecessary logging messages
+
+### MP4
+- Update README
+- Merge PR from LaptopCat to remove uncessary logging messages
+
+### OGG
+- Update README
+
+### FLAC
+- Update README
+
+
 ## [3.0.0] - 2024-11-5
 ### audiometa
 - Now uses an interface for common tags between file types instead of a struct
