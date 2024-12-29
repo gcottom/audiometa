@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.0.4]
+### audiometa
+- Use latest dependencies
+
+### MP3
+- Minor change to temp writer
+- Update dependencies
+
+### MP4
+- Update dependencies
+
+### OGG
+- Update dependencies
+
+### FLAC
+- Read/Write Circle protection
+- Update dependencies
+
 ## [3.0.1]-[3.0.3] - 2024-12-29
 ### audiometa
 - Use latest dependency versions
