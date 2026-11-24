@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gcottom/audiometa/v3"
+	"github.com/gcottom/audiometa/v4"
 )
 
 func TestFLACIndependentMetadata(t *testing.T) {

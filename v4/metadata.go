@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gcottom/audiometa-core"
-	"github.com/gcottom/flacmeta"
-	"github.com/gcottom/mp3meta"
-	"github.com/gcottom/mp4meta"
-	"github.com/gcottom/oggmeta"
+	"github.com/gcottom/audiometa-core/v2"
+	"github.com/gcottom/flacmeta/v2"
+	"github.com/gcottom/mp3meta/v2"
+	"github.com/gcottom/mp4meta/v2"
+	"github.com/gcottom/oggmeta/v2"
 )
 
 // Metadata exposes typed metadata across all supported audio formats. It owns

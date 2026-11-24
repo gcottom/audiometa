@@ -1,11 +1,12 @@
-## Unreleased
+# Changelog
+
+## [4.0.0]
 
 - Add the canonical `OpenMetadata` editor and format-independent custom values.
 - Add generated field references and convenience accessors.
-- Keep the v3 `Tag` interface and existing format detection.
+- Publish the unified SDK at `github.com/gcottom/audiometa/v4` with the core and four adapter modules pinned to v2.0.0.
+- Preserve the v3 `Tag` method signatures and existing format detection in v4. The `v3/` source matches the v3.0.5 release.
 - Verify shared field round trips, metadata transfer and compressed audio preservation.
-
-# Changelog
 
 ## [3.0.5] - 2026-11-24
 

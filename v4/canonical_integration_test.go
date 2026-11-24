@@ -12,9 +12,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gcottom/audiometa-core"
-	"github.com/gcottom/audiometa-core/contracttest"
-	"github.com/gcottom/audiometa/v3"
+	"github.com/gcottom/audiometa-core/v2"
+	"github.com/gcottom/audiometa-core/v2/contracttest"
+	"github.com/gcottom/audiometa/v4"
 )
 
 type integrationFormat struct {

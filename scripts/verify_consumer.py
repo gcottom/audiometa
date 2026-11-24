@@ -1,4 +1,4 @@
-"""Build the candidate modules through Go's file-proxy protocol."""
+"""Verify a clean AudioMeta consumer with a local or public Go proxy."""
 
 import argparse
 import json
@@ -10,12 +10,12 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULES = {
-    "audiometa-core": ("audiometa-core", "v0.1.0"),
-    "mp3meta": ("mp3meta", "v0.1.0"),
-    "mp4meta": ("mp4meta", "v0.1.0"),
-    "oggmeta": ("oggmeta", "v0.1.0"),
-    "flacmeta": ("flacmeta", "v0.1.0"),
-    "audiometa/v3": ("audiometa/v3", "v3.1.0"),
+    "audiometa-core/v2": ("audiometa-core", "v2.0.0"),
+    "mp3meta/v2": ("mp3meta", "v2.0.0"),
+    "mp4meta/v2": ("mp4meta", "v2.0.0"),
+    "oggmeta/v2": ("oggmeta", "v2.0.0"),
+    "flacmeta/v2": ("flacmeta", "v2.0.0"),
+    "audiometa/v4": ("audiometa/v4", "v4.0.0"),
 }
 CONSUMER = r'''package consumer
 
@@ -25,7 +25,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gcottom/audiometa/v3"
+	"github.com/gcottom/audiometa-core/v2"
+	"github.com/gcottom/audiometa/v4"
 )
 
 func TestConsumer(t *testing.T) {
@@ -44,7 +45,7 @@ func TestConsumer(t *testing.T) {
 	tag, err := audiometa.OpenMetadata(bytes.NewReader(original.Bytes()))
 	if err != nil || tag.GetTitle() != "Legacy consumer" { t.Fatalf("legacy to canonical: %v", err) }
 	if err := tag.SetTitle("Modern consumer"); err != nil { t.Fatal(err) }
-	if err := tag.SetField(audiometa.Artist, audiometa.TextValue("First"), audiometa.TextValue("Second")); err != nil { t.Fatal(err) }
+	if err := tag.SetField(audiometa.Artist, core.TextValue("First"), audiometa.TextValue("Second")); err != nil { t.Fatal(err) }
 	if err := tag.SetCustom("collection", "Archive", "Favorites"); err != nil { t.Fatal(err) }
 	if err := tag.SetISRC("invalid"); !errors.Is(err, audiometa.ErrInvalidValue) { t.Fatal(err) }
 	var result bytes.Buffer
@@ -92,24 +93,28 @@ def package(proxy, name, source, version):
                 blob.write(source.parent / filename, prefix + filename)
 
 
-def run(work, go):
+def run(work, go, public):
     proxy = work / "proxy"
-    for name, (directory, version) in MODULES.items():
-        package(proxy, name, ROOT / directory, version)
+    public_proxy = "https://proxy.golang.org"
+    if not public:
+        for name, (directory, version) in MODULES.items():
+            package(proxy, name, ROOT / directory, version)
 
     consumer = work / "consumer"
     consumer.mkdir()
     (consumer / "go.mod").write_text(
         "module example.org/audiometa-consumer\n\ngo 1.18\n\n"
-        "require github.com/gcottom/audiometa/v3 v3.1.0\n",
+        "require github.com/gcottom/audiometa/v4 v4.0.0\n",
         encoding="utf-8",
     )
     (consumer / "consumer_test.go").write_text(CONSUMER, encoding="utf-8")
     env = dict(
         os.environ, GOENV="off", GOWORK="off", GOFLAGS="",
         GOTOOLCHAIN="local", GOMODCACHE=str(work / "module-cache"),
-        GOPRIVATE="", GONOPROXY="", GONOSUMDB="github.com/gcottom/*",
-        GOPROXY=f"{proxy.as_uri()},https://proxy.golang.org", GOSUMDB="sum.golang.org",
+        GOPRIVATE="", GONOPROXY="",
+        GONOSUMDB="" if public else "github.com/gcottom/*",
+        GOPROXY=public_proxy if public else f"{proxy.as_uri()},{public_proxy}",
+        GOSUMDB="sum.golang.org",
     )
     for args in (["version"], ["mod", "tidy"], ["list", "-m", "all"],
                  ["build", "./..."], ["test", "-count=1", "-v", "./..."]):
@@ -119,9 +124,10 @@ def run(work, go):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--go", default="go", help="Go executable path")
+    parser.add_argument("--public", action="store_true", help="resolve published modules exclusively through the public Go proxy")
     options = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="audiometa-release-") as work:
-        run(Path(work), options.go)
+        run(Path(work), options.go, options.public)
 
 
 if __name__ == "__main__":

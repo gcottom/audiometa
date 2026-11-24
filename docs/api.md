@@ -1,4 +1,6 @@
-# Unified metadata in AudioMeta v3
+# Unified metadata in AudioMeta v4
+
+Import `github.com/gcottom/audiometa/v4`.
 
 Use `OpenMetadata` for a format-independent editor. Its source must implement `io.ReadSeeker`. Reopen the saved output to inspect the actual on-disk result. The SDK and its adapters leave caller-provided handles open.
 
@@ -29,7 +31,7 @@ return tag.Save(output)
 
 Set an empty text value to store an explicit empty, or remove the field to make it absent. The same distinction applies to zero integers and false booleans. Track/disc numbers and totals are independent. Partial dates preserve the supplied precision. Use the separate recording, release and original release identifiers when known. Artist lists are ordered and independent of literal artist credits.
 
-`OpenTag` retains the v3 `Tag` contract and existing concrete adapter types. The new convenience setters return validation errors. Use `OpenMetadata` when you need multi-value reads, precise removals, transfer, or the preservation guarantees documented here.
+`OpenTag` retains the v3 `Tag` method signatures. Concrete results in v4 come from the corresponding `/v2` adapter modules. Update direct adapter imports and concrete type assertions when migrating. The `OpenMetadata` convenience setters return validation errors. Use `OpenMetadata` when you need multi-value reads, precise removals, transfer, or the preservation guarantees documented here.
 
 ## Transfer
 

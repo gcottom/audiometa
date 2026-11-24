@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/gcottom/audiometa/v3"
+	"github.com/gcottom/audiometa/v4"
 )
 
 func TestNamedAccessorsShareCanonicalState(t *testing.T) {

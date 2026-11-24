@@ -1,5 +1,9 @@
 # audiometa
 
+```sh
+go get github.com/gcottom/audiometa/v4@v4.0.0
+```
+
 audiometa is the final piece that ties several projects together with a simple interface. While the code looks short for this specific project, the underlying modules are extensive. 
 
 ## File Types
@@ -38,12 +42,19 @@ func retitle(input io.ReadSeeker, output io.Writer, title string) error {
 }
 ```
 
-Import `github.com/gcottom/audiometa/v3` and `io` for this example. The Go
-module lives in `v3/`. Run the unit tests there with `go test ./...`. For
+Import `github.com/gcottom/audiometa/v4` and `io` for this example. The Go
+module lives in `v4/`. Run the unit tests there with `go test ./...`. For
 decoded-audio round trips, install FFmpeg with AAC, libmp3lame, libvorbis and
 libopus support, then run `go test -tags=integration ./...`. The integration
 tests generate their own media and compare decoded samples before and after
 metadata edits.
+
+## Migrating from v3
+
+Update the import to `github.com/gcottom/audiometa/v4`. Existing `OpenTag` calls
+and the `Tag` interface keep their method signatures. If you import an adapter
+directly or assert a concrete tag type, use that adapter's `/v2` import path.
+The `github.com/gcottom/audiometa/v3@v3.0.5` module remains available for v3 callers.
 
 ## Unified metadata editor
 

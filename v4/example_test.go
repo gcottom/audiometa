@@ -3,7 +3,7 @@ package audiometa_test
 import (
 	"io"
 
-	"github.com/gcottom/audiometa/v3"
+	"github.com/gcottom/audiometa/v4"
 )
 
 func ExampleOpenMetadata() {
