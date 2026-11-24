@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.5] - 2026-11-24
+
+- Detect untagged MPEG Layer III files using two compatible frame headers.
+- Preserve original MPEG bytes when editing padded ID3v2 tags.
+- Correct MP4 fast-start chunk offsets and PNG artwork encoding.
+- Preserve custom Ogg comments and unchanged audio pages.
+- Stream FLAC writes with bounded memory and preserve unrelated metadata.
+- Pin MP3Meta 0.0.5, MP4Meta 0.0.6, OggMeta 0.0.9, and FLACMeta 0.0.7.
+- Add optional FFmpeg integration tests that compare decoded audio across metadata edits.
+
 ## [3.0.4]
 ### audiometa
 - Use latest dependencies
