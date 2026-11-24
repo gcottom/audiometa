@@ -44,3 +44,30 @@ decoded-audio round trips, install FFmpeg with AAC, libmp3lame, libvorbis and
 libopus support, then run `go test -tags=integration ./...`. The integration
 tests generate their own media and compare decoded samples before and after
 metadata edits.
+
+## Unified metadata editor
+
+`OpenMetadata` exposes typed fields, ordered values, native encoded artwork
+and namespaced custom values. Use the same field identifiers on MP3, MP4,
+Ogg Vorbis/Opus and FLAC.
+
+```go
+tag, err := audiometa.OpenMetadata(input)
+if err != nil {
+    return err
+}
+if err := tag.SetTitle("Example"); err != nil {
+    return err
+}
+if err := tag.SetField(audiometa.Mood, audiometa.TextValue("Energetic")); err != nil {
+    return err
+}
+if err := tag.SetCustom("COLLECTION", "Favorites", "Archive"); err != nil {
+    return err
+}
+return tag.Save(output)
+```
+
+[API and storage](docs/api.md) · [Field compatibility](docs/compatibility.md) ·
+[Verification and limitations](docs/verification.md) ·
+[Repository audit](docs/baseline.md) · [Architecture](docs/adr-unified-metadata.md)

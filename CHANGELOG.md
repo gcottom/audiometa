@@ -1,3 +1,10 @@
+## Unreleased
+
+- Add the canonical `OpenMetadata` editor and format-independent custom values.
+- Add generated field references and convenience accessors.
+- Keep the v3 `Tag` interface and existing format detection.
+- Verify shared field round trips, metadata transfer and compressed audio preservation.
+
 # Changelog
 
 ## [3.0.5] - 2026-11-24
