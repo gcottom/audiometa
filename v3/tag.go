@@ -65,6 +65,13 @@ func OpenTag(r io.ReadSeeker) (Tag, error) {
 	case string(b[0:4]) == "OggS":
 		return oggmeta.ReadOGG(r)
 	default:
+		ok, err := isUntaggedMP3(r, b[:4])
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return mp3meta.ParseMP3(r)
+		}
 		return nil, errors.New("unsupported file type")
 	}
 
