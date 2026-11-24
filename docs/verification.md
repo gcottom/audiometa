@@ -1,13 +1,13 @@
 # AudioMeta qualification and limitations
 
-The local candidate adds the shared editor to the four format libraries and to the SDK. The released v3 `Tag` contract, concrete format types and format entry points remain available.
+AudioMeta v4 integrates the shared editor from the v2 format libraries. The v3 module is preserved in the repository. The v4 `OpenTag` interface follows the same usage pattern and returns the v2 adapter types.
 
 ## Verification
 
 - The registry defines 133 fields. The shared suite verifies writable-field round trips and removals using the same typed samples in ID3v2.2, v2.3 and v2.4, fast-start MP4/M4A, M4B, Ogg Vorbis, Ogg Opus and FLAC. It also checks exact no-op bytes, ordered duplicate custom values, repeated saves and read-only errors. Separate cases cover ID3v1.1 reads and coordinated removals, protected data, malformed input and short outputs. [Generated field matrix](compatibility.md)
 - FFmpeg 9.1 decoded sample-identical PCM from each source and edited output in the cross-format transfer test. FFprobe 9.1 returned identical audio codec properties, sample rate, channel count, duration and ordered SHA-256 hashes for all original compressed audio packets. The test starts with canonical values from a saved FLAC and transfers them to every target, without copying the FLAC audio. Legacy v3.0.5 FFmpeg regressions run alongside this suite.
 - Mutagen 1.48.1 independently recognized ID3 text, ReplayGain, MusicBrainz UFID, picture bytes, synchronized lyrics, chapters and musician credits. FFprobe and Mutagen recognized MP4 Nero chapters, repeated artists, track pairs, booleans, BPM, ISRC freeform and exact artwork. Mutagen verified Vorbis and Opus tags and full PNG payloads after the comment packet grew past one page. It verified FLAC comments, ISRC, ReplayGain, and native picture data and attributes. ExifTool 13.64 provided additional MP3 and Ogg readbacks. External tools saw fallback entries as private string data.
-- The clean consumer used the proposed module versions, a fresh module cache, `GOWORK=off`, and the local Go proxy protocol. It compiled and executed legacy and unified client code with Go 1.18.10 and Go 1.27.1. The candidate mirrors retain the current Go 1.18 module declarations. The actual published dependency artifacts still need to be checked after release approval. [Release plan](release-plan.md)
+- The clean consumer used the v4 SDK and v2.0.0 dependencies, a fresh module cache, and `GOWORK=off`. Local release packaging passed with Go 1.18.10 and Go 1.27.1. The public release gate repeats the same client tests through the public Go proxy and checksum database. [Release plan](release-plan.md)
 
 All six modules passed build, unit tests, race detector, vet, Staticcheck and govulncheck. The vulnerability scan reported zero reachable findings. Imported-package or required-module findings outside the calling paths are recorded in the individual logs.
 
@@ -24,7 +24,7 @@ The nine fixture suites produced 1,197 canonical field results, including 1,170 
 
 ## Reproduction
 
-From the workspace root with the six modules and local workspace file present, run the following from each module directory. For the SDK use `audiometa/v3`. Enable CGO and install a compatible C compiler for race runs.
+From the workspace root with the six modules and local workspace file present, run the following from each module directory. For the SDK use `audiometa/v4`. Enable CGO and install a compatible C compiler for race runs.
 
 ```text
 go build ./...
@@ -35,9 +35,9 @@ staticcheck ./...
 govulncheck ./...
 ```
 
-Run `go test -tags integration -count=1 -v ./...` in AudioMeta, OggMeta and MP4Meta with FFmpeg and FFprobe on PATH. For the independent Mutagen tests install Mutagen for Python and set `AUDIOMETA_MUTAGEN_PYTHON` to the interpreter executable. Set `AUDIOMETA_EXIFTOOL` to the ExifTool binary for the optional Ogg readback. MP3 generation and readback commands are in the workspace `evidence/mp3meta` folder. Build the clean consumer using `py audiometa/scripts/verify_consumer.py` or run it with `--go` to select a specific Go executable.
+Run `go test -tags integration -count=1 -v ./...` in AudioMeta, OggMeta and MP4Meta with FFmpeg and FFprobe on PATH. For the independent Mutagen tests install Mutagen for Python and set `AUDIOMETA_MUTAGEN_PYTHON` to the interpreter executable. Set `AUDIOMETA_EXIFTOOL` to the ExifTool binary for the optional Ogg readback. MP3 generation and readback commands are in the workspace `evidence/mp3meta` folder. Build the clean consumer using `py audiometa/scripts/verify_consumer.py` or run it with `--go` to select a specific Go executable. Use `--public` to resolve the released module versions from the public Go proxy and validate their checksums.
 
-The workspace `evidence/final` directory contains raw command results and coverage profiles. The per-adapter subdirectories or files under `evidence` contain targeted fuzz, benchmarks and independent-tool logs. The SDK `docs/canonical-test-results.jsonl` contains the field-specific pass receipts used by the matrix. Run `go generate ./...` from the v3 module to regenerate the aliases and matrix from these receipts and the sibling core repository.
+The workspace `evidence/final` directory contains raw command results and coverage profiles. The per-adapter subdirectories or files under `evidence` contain targeted fuzz, benchmarks and independent-tool logs. The SDK `docs/canonical-test-results.jsonl` contains the field-specific pass receipts used by the matrix. Run `go generate ./...` from the v4 module to regenerate the aliases and matrix from these receipts and the sibling core repository.
 
 ## Measured resource costs
 

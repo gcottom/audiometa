@@ -8,6 +8,16 @@ github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7Do
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/gcottom/audiometa-core/v2 v2.0.0 h1:1gvtZSsF6sYeh0jcf2x8KJTbeRr30A9U5iHrgaYgWe8=
+github.com/gcottom/audiometa-core/v2 v2.0.0/go.mod h1:iuXIUwGIDTQ5Oxe+nXZj3x1RU4EXqfBa3sMrJGpU/TY=
+github.com/gcottom/flacmeta/v2 v2.0.0 h1:9ce2MFjAGINoXrepJSieYpcLKX5353wPepdT0p2hFEc=
+github.com/gcottom/flacmeta/v2 v2.0.0/go.mod h1:A+A3zBm6oyYcDyp386SMUDhuNAIPMCuMKCd82v4bOeE=
+github.com/gcottom/mp3meta/v2 v2.0.0 h1:v9A5n7kul1Ub8HGI/nZ1MSUiQHVJlQ+CI2Px8HWjtaQ=
+github.com/gcottom/mp3meta/v2 v2.0.0/go.mod h1:cFBVgBJhUnI4bVKt6Da4/aAbETXG2TImZgwb5fqBRrY=
+github.com/gcottom/mp4meta/v2 v2.0.0 h1:sanyUPmQD2U0e/TM67UPTn8Ez3XLbyXP8TT3dM2ra5k=
+github.com/gcottom/mp4meta/v2 v2.0.0/go.mod h1:ckIDLUZphv5IlMAARkuKAg2ELLIy66xtLsK+YE4DGyE=
+github.com/gcottom/oggmeta/v2 v2.0.0 h1:GPFDCvvuzGS+eVSm3HObtCzfWI+kBLA6vmIAE+BRTK4=
+github.com/gcottom/oggmeta/v2 v2.0.0/go.mod h1:GNvbdcm3MO5zxprBCUmuhgwVm2sQLn18t7Kvih7vqQk=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
